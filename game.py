@@ -81,6 +81,7 @@ class Agent(object):
 	create blank instance of Hand for each other player
 
 	instance of csp or something
+	gabes a bitch
 	'''
 	def __init__(self):
 		'''
