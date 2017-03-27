@@ -192,6 +192,10 @@ class Agent(object):
 		'''
 		init hand and shit
 		opponents
+
+		- Initialize their own hand (given from game class)
+		- Initialize ghost hands for 2 oponents (csp*2)
+		- Initialize ghost cards for case file (csp)
 		'''
 		pass
 
@@ -204,6 +208,8 @@ class Agent(object):
 	def update(self, move):
 		'''
 		update knowledge base with whatever from game
+
+		Update CSPs
 		'''
 		pass
 

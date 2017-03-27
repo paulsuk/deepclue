@@ -3,6 +3,12 @@ import functools
 import numpy as np
 import game
 
+'''
+TO DO: 
+- Constraint class
+- other requried functions for CSP
+'''
+
 class CSP:
 	'''
 	Class for packing up a set of variables into a CSP problem.
