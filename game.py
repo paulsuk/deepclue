@@ -66,6 +66,11 @@ class Game(object):
 	
 
 	def _make_case_file(self):
+		'''
+		Assign Case Files from the shuffled lists
+		and remove the names of the cards in the case
+		file from the shuffled lists
+		'''
 		self.caseFileRoom = self.rooms[0]
 		self.caseFileWeapon = self.weapons[0]
 		self.caseFileSuspect = self.suspects[0]
@@ -108,10 +113,9 @@ class Card(object):
 	dom - dom is list of names card can take on or 
 		- only contains name of card
 	curdom - current domain
-	assignedType
-	assignedName
+	assignedType - Type of the card is known
 	'''
-	def __init__(self, type='', name='', domain=[]):
+	def __init__(self, type=None, name=None, domain=[]):
 		'''
 		Initialize a card with a type = <Room, Suspect, Weapon>
 		and a name = <Miss Scarlett, Lead Pipe, Lounge, ...>
@@ -123,12 +127,8 @@ class Card(object):
 		self.dom = list(domain)
 		self.curdom = [True] * len(domain)
 		self.assignedType = None
-		self.assignedName = None
 
 	def assign(self, player):
-		'''
-		self explanatory
-		'''
 		self.player = player
 
 	def getType(self):
@@ -183,6 +183,9 @@ class Hand(object):
 				return True
 		return False
 
+	def getCards(self):
+		return (list(self.cards))
+
 
 class Agent(object):
 	'''
@@ -215,4 +218,7 @@ class Agent(object):
 
 
 if __name__ == '__main__':
-
+	hand = Hand()
+	hand.add_card(Card('Weapon', 'Lead Pipe'))
+	for c in hand.getCards():
+		print (c.getType())
