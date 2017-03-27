@@ -1,3 +1,4 @@
+import cspclue
 import time
 import functools
 import numpy as np
@@ -24,7 +25,6 @@ class Game(object):
 		self._init_cards()
 		self._make_case_file()
 
-
 	def _init_cards(self):
 		'''
 		Initialize all 21 cards
@@ -32,36 +32,27 @@ class Game(object):
 		Return lists of each type
 		'''
 		#Init Rooms
-		r1 = Card('Room', 'Conservatory')
-		r2 = Card('Room', 'Hall')
-		r3 = Card('Room', 'Lounge')
-		r4 = Card('Room', 'Dining Room')
-		r5 = Card('Room', 'Kitchen')
-		r6 = Card('Room', 'Ballroom')
-		r7 = Card('Room', 'Billiard Room')
-		r8 = Card('Room', 'Library')
-		r9 = Card('Room', 'Study')
-		self.rooms = [r1, r2, r3, r4, r5, r6, r7, r8, r9]
+		self.rooms = []
+		rooms = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
+		for room in rooms:
+			r = Card('Room', room, [room])
+			self.rooms.append(r)
 		np.random.shuffle(self.rooms)
 
 		#Init weapons
-		w1 = Card('Weapon', 'Candlestick')
-		w2 = Card('Weapon', 'Revolver')
-		w3 = Card('Weapon', 'Wrench')
-		w4 = Card('Weapon', 'Rope')
-		w5 = Card('Weapon', 'Lead Pipe')
-		w6 = Card('Weapon', 'Knife')
-		self.weapons = [w1, w2, w3, w4, w5, w6]
+		self.weapons = []
+		weapons = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
+		for weapon in weapons:
+			w = Card('Weapon', weapon, [weapon])
+			self.weapons.append(w)
 		np.random.shuffle(self.weapons)
 
 		#Init suspects
-		s1 = Card('Suspect', 'Miss Scarlett')
-		s2 = Card('Suspect', 'Mrs White')
-		s3 = Card('Suspect', 'Mr Green')
-		s4 = Card('Suspect', 'Mrs Peacock')
-		s5 = Card('Suspect', 'Colonel Mustard')
-		s6 = Card('Suspect', 'Professor Plum')
-		self.suspects = [s1, s2, s3, s4, s5, s6]
+		self.suspects = []
+		suspects = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
+		for suspect in suspects:
+			s = Card('Suspect', suspect, [suspect])
+			self.suspects.append(s)
 		np.random.shuffle(self.suspects)
 	
 
@@ -113,7 +104,7 @@ class Card(object):
 	dom - dom is list of names card can take on or 
 		- only contains name of card
 	curdom - current domain
-	assignedType - Type of the card is known
+	assignedName - Name of card is known / tent assigned to
 	'''
 	def __init__(self, type=None, name=None, domain=[]):
 		'''
@@ -126,7 +117,8 @@ class Card(object):
 
 		self.dom = list(domain)
 		self.curdom = [True] * len(domain)
-		self.assignedType = None
+
+		self.assignedName = name
 
 	def assign(self, player):
 		self.player = player
@@ -203,7 +195,6 @@ class Agent(object):
 		'''
 		pass
 
-
 	def make_move(self):
 		'''
 		decide when to make a suggestion or accusation
@@ -218,7 +209,4 @@ class Agent(object):
 
 
 if __name__ == '__main__':
-	hand = Hand()
-	hand.add_card(Card('Weapon', 'Lead Pipe'))
-	for c in hand.getCards():
-		print (c.getType())
+	game = Game()
