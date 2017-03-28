@@ -120,7 +120,7 @@ class Card(object):
 
 		self.assignedName = name
 
-	def assign(self, player):
+	def assignPlayer(self, player):
 		self.player = player
 
 	def getType(self):
@@ -142,6 +142,73 @@ class Card(object):
 		'''Also print the variable domain and current domain'''
 		print("Type, Name--\"{}{}\": Dom = {}, CurDom = {}".format(self.type, self.name, self.dom, self.curdom))
 
+	def value_index(self, name):
+		'''Domain values need not be numbers, so return the index
+		in the domain list of a variable value'''
+		return self.dom.index(name)
+
+	#methods for current domain
+	def cur_domain(self):
+		'''return list of values in CURRENT domain (if assigned 
+		only assigned value is viewed as being in current domain)'''
+		vals = []
+		if self.is_assigned():
+			vals.append(self.get_assigned_name())
+		else:
+			for i, val in enumerate(self.dom):
+				if self.curdom[i]:
+					vals.append(val)
+		return vals
+	
+	def in_cur_domain(self, value):
+		'''check if value is in CURRENT domain (without constructing list)
+		   if assigned only assigned value is viewed as being in current 
+		   domain'''
+		if not value in self.dom:
+		    return False
+		if self.is_assigned():
+		    return value == self.get_assigned_name()
+		else:
+		    return self.curdom[self.value_index(value)]
+	
+	def cur_domain_size(self):
+		'''Return the size of the variables domain (without construcing list)'''
+		if self.is_assigned():
+		    return 1
+		else:
+		    return(sum(1 for v in self.curdom if v))
+	
+	def restore_curdom(self):
+		'''return all values back into CURRENT domain'''
+		for i in range(len(self.curdom)):
+			self.curdom[i] = True
+	
+	#methods for assigning and unassigning
+	def is_assigned(self):
+	   	return self.assignedName != None
+	
+	def get_assigned_name(self):
+		'''return assigned value .. returns None if is unassigned'''
+		return self.assignedName
+	
+	def assign(self, name):
+		'''Used by bt_search. When we assign we remove all other values
+		   values from curdom. We save this information so that we can
+		   reverse it on unassign'''
+
+		if self.is_assigned() or not self.in_cur_domain(name):
+		    print("ERROR: trying to assign variable", self, 
+		          "that is already assigned or illegal value (not in curdom)")
+		    return
+		self.assignedName = name
+	
+	def unassign(self):
+		'''Used by bt_search. Unassign and restore old curdom'''
+		if not self.is_assigned():
+		    print("ERROR: trying to unassign variable", self, " not yet assigned")
+		    return
+		self.assignedName = None
+   	
 
 class Hand(object):
 	'''
