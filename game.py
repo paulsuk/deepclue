@@ -1,6 +1,12 @@
 import time
 import functools
 
+'''
+Gabe - csp base and how to instantiate and stuff , how to add constraints and stuff
+Paul - players doing stuff
+Grace - hands
+'''
+
 class Game(object):
 
 	def __init__(self):
@@ -12,7 +18,7 @@ class Game(object):
 		- Choose a player to go first
 		'''
 		pass
-	
+
 	def start(self):
 		'''
 		- keeping track of who's turn is it
@@ -90,7 +96,6 @@ class Agent(object):
 		'''
 		pass
 
-
 	def make_move(self):
 		'''
 		decide when to make a suggestion or accusation
@@ -102,7 +107,3 @@ class Agent(object):
 		update knowledge base with whatever from game
 		'''
 		pass
-
-
-
-
