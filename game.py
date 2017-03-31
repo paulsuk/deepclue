@@ -1,7 +1,13 @@
+import abc
 import cspclue
 import time
 import functools
 import numpy as np
+
+
+ROOMS = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
+WEAPONS = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
+SUSPECTS = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
 
 class Game(object):
 	'''
@@ -33,24 +39,21 @@ class Game(object):
 		'''
 		#Init Rooms
 		self.rooms = []
-		rooms = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
-		for room in rooms:
+		for room in ROOMS:
 			r = Card('Room', room, [room])
 			self.rooms.append(r)
 		np.random.shuffle(self.rooms)
 
 		#Init weapons
 		self.weapons = []
-		weapons = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
-		for weapon in weapons:
+		for weapon in WEAPONS:
 			w = Card('Weapon', weapon, [weapon])
 			self.weapons.append(w)
 		np.random.shuffle(self.weapons)
 
 		#Init suspects
 		self.suspects = []
-		suspects = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
-		for suspect in suspects:
+		for suspect in SUSPECTS:
 			s = Card('Suspect', suspect, [suspect])
 			self.suspects.append(s)
 		np.random.shuffle(self.suspects)
@@ -70,29 +73,87 @@ class Game(object):
 		self.weapons.pop(0)
 		self.suspects.pop(0)
 
+	def _distribute_cards(self):
+		'''
+		distributes remaining cards and returns then as hands
+		must be called after _make_case_file()
+		'''
 
-	def start(self):
+		hand1 = Hand()
+		hand2 = Hand()
+		hand3 = Hand()
+
+		all_cards = np.shuffle(np.array(self.rooms + self.weapons + self.suspects))
+
+		for i in range(all_cards.len()):
+			card = all_cards[i]
+			if i % 3 == 0:
+				hand1.add_card(card)
+			elif i % 3 == 1:
+				hand2.add_card(card)
+			else:
+				hand3.add_card(card)
+
+		return hand1, hand2, hand3
+
+	def add_players(self, agent1, agent2, agent3):
+		'''
+		Adds 3 agents, initializes them and gives them cards
+		'''
+		hand1, hand2, hand3 = self._distribute_cards
+		agent1.assign_order(1)
+		agent1.give_hand(hand1)
+		agent2.assign_order(2)
+		agent2.give_hand(hand2)
+		agent3.assign_order(3)
+		agent3.give_hand(hand3)
+
+		self.agents = np.shuffle(np.array([agent1, agent2, agent3]))
+
+
+	def play_game(self):
 		'''
 		- keeping track of who's turn is it
 		- is game still going/did someone win?
 		- tell next player it's their turn
 		'''
-		pass
+		isEliminated = [False]*len(self.agents)
+		finished = False
+		i = 0
 
-	def _made_suggestion(self, player, suggestion):
-		'''
-		- tell all agents the suggestion
-		- update all players with proof if proof was made
-		'''
-		pass
+		while not finished:
+			suggestor = self.agents[i]
 
-	def _made_accusation(self, player, suggestion):
-		'''
-		- tell all players an accusation was made
-		- show case file to Agent
-		- if they won end game, otherwise make them inactive, continue game
-		'''
-		pass
+			move = suggestor.make_move()
+
+			if isinstance(move, Suggestion):
+				# suggestor made a suggestion
+				responder = self.agents[(i + 1) % 3]
+				observer = self.agents[(i + 2) % 3]
+
+				card_exchanged = self._made_suggestion(move, suggestor, responder, observer)
+
+				if not card_exchanged:
+					# ask the next player
+					move.responder = observer.name
+					_ = self._made_suggestion(move, suggestor, observer, responder)
+
+			else:
+				# suggestor made an accusation
+
+			i = (i + 1) % 3
+
+		return
+
+	def _made_suggestion(self, move, suggester, responder, observer):
+		response = responder.respond_to_suggestion(move)
+		suggestor.observe_response(move, response)
+
+		card_exchanged = response is not None
+		observer.observe_suggestion(move, card_exchanged)
+
+		return card_exchanged
+
 
 
 class Card(object):
@@ -245,8 +306,20 @@ class Hand(object):
 	def getCards(self):
 		return (list(self.cards))
 
+class Suggestion(object):
+
+	def __init__(self, suggestor, responder, weapon, room, suspect):
+		self.suggestor = suggestor
+		self.responder = responder
+		self.weapon = weapon
+		self.room = room
+		self.suspect = suspect
+
+	def get_cards(self):
+		return [self.room, self.weapon, self.suspect]
 
 class Agent(object):
+	__metaclass__ = abc.ABCMeta
 	'''
 	Hand
 
@@ -255,31 +328,72 @@ class Agent(object):
 	instance of csp or something
 	gabes a bitch
 	'''
-	def __init__(self):
+	def __init__(self, name):
 		'''
 		init hand and shit
 		opponents
 
-		- Initialize their own hand (given from game class)
+		- DONE Initialize their own hand (given from game class)
 		- Initialize ghost hands for 2 oponents (csp*2)
-		- Initialize ghost cards for case file (csp)
+		- DONE Initialize ghost cards for case file (csp)
 		'''
-		pass
+		self.name = name
+		self.caseFileWeapon = Card(type="Weapon", domain=WEAPONS)
+		self.caseFileSuspect = Card(type="Suspect", domain=SUSPECTS)
+		self.caseFileRoom = Card(type="Room", domain=ROOMS)
 
+		#NEED a pruning method to prune our current cards from the casefile
+
+
+	# def assign_order(self, order):
+	# 	'''
+	# 	Assign an order to agent given. 
+	# 	1 goes first, asks 2, 2 asks 3, 3 asks 1. (order is 1->2->3->1...)
+	# 	'''
+	# 	self.order = order
+
+	def give_hand(self, hand):
+		'''
+		Ayo hand
+		'''
+		self.hand = hand
+
+	@abc.abstractmethod
 	def make_move(self):
 		'''
 		decide when to make a suggestion or accusation
 		'''
-		pass
+		return
 
-	def update(self, move):
+	@abc.abstractmethod
+	def respond_to_suggestion(self, move):
 		'''
 		update knowledge base with whatever from game
 
 		Update CSPs
-		'''
-		pass
 
+		give a response of a card if you have a card in suggestion, or None otherwise
+		'''
+		return
+
+	@abc.abstractmethod
+	def observe_suggestion(self, suggestion, did_respond):
+		'''
+		used for observation
+		observe a suggestion, and see the response
+		suggestion - of type SUGGESTION
+		did_respond - boolean to see if the responder sent a card back or not
+		'''
+		return
+
+	@abc.abstractmethod
+	def observe_response(self, suggestion, response):
+		'''
+		after making a suggestion, this method will be called to respond to a response
+
+		'''
+		return
 
 if __name__ == '__main__':
 	game = Game()
+	# different agents must be initialized here, and then added to the game
