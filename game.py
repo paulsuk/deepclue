@@ -1,13 +1,30 @@
-import cspclue
+from cspclue import *
 import time
 import functools
 import numpy as np
+import pdb
 
 '''
 Gabe - csp base and how to instantiate and stuff , how to add constraints and stuff
 Paul - players doing stuff
 Grace - hands
+
+Goals are written in order of importance
+CSP based: able to make an accusation once the player has directly received all necessary information.
+CSP based: able to make an accusation once the player has indirectly received all necessary information (inferring from answers of other players).
+CSP based: able to make a guessed accusation by noticing that other players have received 100% of their required information.
+Information Theory Based: able to ask the least amount of questions necessary to attain the goal.
+
 '''
+
+ROOMS = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
+WEAPONS = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
+SUSPECTS = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
+
+# Seems like we will no longer need to do the conversion
+# total = ROOMS + WEAPONS + SUSPECTS
+# word_to_num = {k:v for k,v in list(enumerate(total))}
+# num_to_word = {v:k for k,v in word_to_num.items()}
 
 class Game(object):
 	'''
@@ -76,8 +93,6 @@ class Game(object):
 		self.weapons.pop(0)
 		self.suspects.pop(0)
 
->>>>>>> 6d2442611e42567aa60e623f2b78c8d12b4634b1
-
 	def start(self):
 		'''
 		- keeping track of who's turn is it
@@ -101,121 +116,8 @@ class Game(object):
 		'''
 		pass
 
-
-class Card(object):
-	'''
-	VARIABLE CLASS:
-	type = <Room, Suspect, Weapon>
-	name = <Miss Scarlett, Lead Pipe, Study .. >
-	owner - player that holds the card
-	dom - dom is list of names card can take on or
-		- only contains name of card
-	curdom - current domain
-	assignedName - Name of card is known / tent assigned to
-	'''
-	def __init__(self, type=None, name=None, domain=[]):
-		'''
-		Initialize a card with a type = <Room, Suspect, Weapon>
-		and a name = <Miss Scarlett, Lead Pipe, Lounge, ...>
-		'''
-		self.type = type
-		self.name = name
-		self.player = None
-
-		self.dom = list(domain)
-		self.curdom = [True] * len(domain)
-
-		self.assignedName = name
-
-	def assignPlayer(self, player):
-		self.player = player
-
-	def getType(self):
-		return (self.type)
-
-	def getName(self):
-		return (self.name)
-
-	def getPlayer(self):
-		return (self.player)
-
-	def getDomainSize(self):
-		return (len(self.dom))
-
-	def getDom(self):
-		return (list(self.dom))
-
-	def print_all(self):
-		'''Also print the variable domain and current domain'''
-		print("Type, Name--\"{}{}\": Dom = {}, CurDom = {}".format(self.type, self.name, self.dom, self.curdom))
-
-	def value_index(self, name):
-		'''Domain values need not be numbers, so return the index
-		in the domain list of a variable value'''
-		return self.dom.index(name)
-
-	#methods for current domain
-	def cur_domain(self):
-		'''return list of values in CURRENT domain (if assigned
-		only assigned value is viewed as being in current domain)'''
-		vals = []
-		if self.is_assigned():
-			vals.append(self.get_assigned_name())
-		else:
-			for i, val in enumerate(self.dom):
-				if self.curdom[i]:
-					vals.append(val)
-		return vals
-
-	def in_cur_domain(self, value):
-		'''check if value is in CURRENT domain (without constructing list)
-		   if assigned only assigned value is viewed as being in current
-		   domain'''
-		if not value in self.dom:
-		    return False
-		if self.is_assigned():
-		    return value == self.get_assigned_name()
-		else:
-		    return self.curdom[self.value_index(value)]
-
-	def cur_domain_size(self):
-		'''Return the size of the variables domain (without construcing list)'''
-		if self.is_assigned():
-		    return 1
-		else:
-		    return(sum(1 for v in self.curdom if v))
-
-	def restore_curdom(self):
-		'''return all values back into CURRENT domain'''
-		for i in range(len(self.curdom)):
-			self.curdom[i] = True
-
-	#methods for assigning and unassigning
-	def is_assigned(self):
-	   	return self.assignedName != None
-
-	def get_assigned_name(self):
-		'''return assigned value .. returns None if is unassigned'''
-		return self.assignedName
-
-	def assign(self, name):
-		'''Used by bt_search. When we assign we remove all other values
-		   values from curdom. We save this information so that we can
-		   reverse it on unassign'''
-
-		if self.is_assigned() or not self.in_cur_domain(name):
-		    print("ERROR: trying to assign variable", self,
-		          "that is already assigned or illegal value (not in curdom)")
-		    return
-		self.assignedName = name
-
-	def unassign(self):
-		'''Used by bt_search. Unassign and restore old curdom'''
-		if not self.is_assigned():
-		    print("ERROR: trying to unassign variable", self, " not yet assigned")
-		    return
-		self.assignedName = None
-
+	def case_file_cards(self):
+		return [self.caseFileRoom, self.caseFileWeapon, self.caseFileSuspect]
 
 class Hand(object):
 	'''
@@ -225,7 +127,7 @@ class Hand(object):
 		'''
 		Initialize 6 empty card objects into hand
 		'''
-		self.cards = [Card()]*6
+		self.cards = [Card('Room', 'needtochangethis')]*6
 
 	def add_card(self, card):
 		'''
@@ -270,8 +172,9 @@ class Agent(object):
 		- Initialize their own hand (given from game class)
 		- Initialize ghost hands for 2 oponents (csp*2)
 		- Initialize ghost cards for case file (csp)
+		Paul, i started doing this just to test my implementation of the CSP.
 		'''
-		pass
+		self.hand = Hand()
 
 	def make_move(self):
 		'''
@@ -287,5 +190,96 @@ class Agent(object):
 		'''
 		pass
 
+
+
 if __name__ == '__main__':
 	game = Game()
+	#don't know where to put this
+
+	# 1st goal AI: deduces by direct information (only what it is directly shown)
+	# 1 CSP, 1 main constraint: all diff constraint on the case Files
+
+	rooms = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
+	rooms = list(map(lambda x: Card('Rooms', x), rooms))
+	weapons = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
+	weapons = list(map(lambda x: Card('Weapons', x), weapons))
+	suspects = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
+	suspects = list(map(lambda x: Card('Suspects', x), suspects))
+	big_list = rooms+weapons+suspects
+	np.random.shuffle(big_list)
+	non_casefile_list = []
+
+
+	# Initiate all agents manually
+	player1 = Agent()
+	player2 = Agent()
+	player3 = Agent()
+	not_casefile_list = [] #creates a list without the casefile cards, since they can't be the same for the players
+	for i in range(len(big_list)):
+		if big_list[i] not in game.case_file_cards():
+			non_casefile_list.append(big_list[i])
+
+	player1.hand.cards = non_casefile_list[0:6]
+	player2.hand.cards = non_casefile_list[7:12]
+	player3.hand.cards = non_casefile_list[13:18]
+
+	#Now, list all variables into the CSP (hands of 3 players and the case file variables)
+	variables = player1.hand.cards + player2.hand.cards + player3.hand.cards + game.case_file_cards()
+
+	# Create CSP instances for every player
+	player1CSP = CSP('player1CSP', game.case_file_cards())
+	player2CSP = CSP('player2CSP', game.case_file_cards())
+	player3CSP = CSP('player3CSP', game.case_file_cards())
+	csp_list = [player1CSP, player2CSP, player3CSP]
+
+	# Add constraints to each player's CSP. This is for the first,
+	#simple AI where the only constrains are that the case files are
+	#different and one is of each type (3 in total)
+
+	# Add one constraint for each card, that constraint being that
+	#the card has to be one of either the room type, or the weapon type
+	#type, or person type
+
+	# Room card constraint
+	player1_CF1 = Card('Room', 'p1cfcard', ROOMS)
+	player2_CF1 = Card('Room', 'p2cfcard', ROOMS)
+	player3_CF1 = Card('Room', 'p3cfcard', ROOMS)
+	player1_CF2 = Card('weapons', 'p1cfcard2', WEAPONS)
+	player2_CF2 = Card('weapons', 'p2cfcard2', WEAPONS)
+	player3_CF2 = Card('weapons', 'p3cfcard2', WEAPONS)
+	player1_CF3 = Card('person', 'p1cfcard3', SUSPECTS)
+	player2_CF3 = Card('person', 'p2cfcard3', SUSPECTS)
+	player3_CF3 = Card('person', 'p3cfcard3', SUSPECTS)
+
+	p1con0 = Constraint('con1', scope = [player1_CF1])
+	# Person card constraint
+	p1con1 = Constraint('con1', scope = [player1_CF2])
+	# Weapon card constraint
+	p1con2 = Constraint('con1', scope = [player1_CF3])
+	p2con0 = Constraint('con1', scope = [player2_CF1])
+	# Person card constraint
+	p2con1 = Constraint('con1', scope = [player2_CF2])
+	# Weapon card constraint
+	p2con2 = Constraint('con1', scope = [player2_CF3])
+	p3con0 = Constraint('con1', scope = [player3_CF1])
+	# Person card constraint
+	p3con1 = Constraint('con1', scope = [player3_CF2])
+	# Weapon card constraint
+	p3con2 = Constraint('con1', scope = [player3_CF3])
+	con_list = [p1con0, p1con1, p1con2]
+	print("con1.scope", p1con1.scope)
+
+	# Add the satisfying tuples
+	p1con0.add_satisfying_tuples([(['Conservatory']), (['Hall']), (['Lounge']), (['Dining Room']), (['Kitchen']), (['Ballroom']), (['Billiard Room']), (['Library']), (['Study'])])
+	p1con1.add_satisfying_tuples([(['Candlestick']), (['Revolver']), (['Wrench']), (['Rope']), (['Lead Pipe']), (['Knife'])])
+	p1con2.add_satisfying_tuples([(['Miss Scarlett']), (['Mrs White']), (['Mr Green']), (['Mrs Peacock']), (['Colonel Mustard']), (['Professor Plum'])])
+
+	# Add these to all player's CSP
+	player1CSP.add_constraint(p1con0)
+	player1CSP.add_constraint(p1con1)
+	player1CSP.add_constraint(p1con2)
+
+	for csp in csp_list:
+		map(lambda x: csp.add_constraint(x), con_list)
+
+	pdb.set_trace()
