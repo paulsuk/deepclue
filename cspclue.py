@@ -92,6 +92,15 @@ class Card:
 		self.name = name
 		self.assignedValue = name
 
+	def update_type(self):
+		if self.assignedValue != None and card.typ == None:
+			if self.assignedValue in WEAPONS:
+				self.typ = 'Weapon'
+			elif self.assignedValue in ROOMS:
+				self.typ = 'Room'
+			else:
+				self.typ = 'Suspect'
+
 	def add_domain_values(self, values):
 		'''Add additional domain values to the domain
 		   Removals not supported removals'''

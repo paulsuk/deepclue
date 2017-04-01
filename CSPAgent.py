@@ -84,15 +84,38 @@ class CSPAgent(Agent):
 				_prune_sug(suggestion, self.first_opponent_hand, self.first_opponent_sets)
 			else:
 				_prune_sug(suggestion, self.second_opponent_hand, self.second_opponent_sets)
-				
+	
+	def _update_case(self, hand):
+		for card in hand.get_cards():
+			
+
 	def _update_player(self, hand, sets):
 		'''
 		Update player's set and hand by pruning cards with domain of length 1
 		and the entire domain if a value in it is already assigned to a card
 		'''
-		assigned = hand.get_assigned_card_values()
-		
-		
+		assigned = set(hand.get_assigned_card_values())
+		copy = sets
+		for domain in sets:
+			#Remove domains of size 1
+			if len(domain) == 1 and domain[0] not in assigned:
+				_assign(hand, domain[0])
+		for domain in copy:
+			#Prune if already assigned
+			overlap = assigned.intersect(domain)
+			if len(overlap) > 0:
+				sets.remove(domain)
+
+			
+	def _assign(self, hand, value):
+		'''
+		Assign value to a non assigned card in hand
+		'''
+		for card in hand.get_cards():
+			if card.assignedValue == None and domain[0] in card.cur_domain():
+				card.assign(domain[0])
+				card.update_type()
+				break
 
 	def _prune_sug(self, suggestion, hand, sets):
 		'''
@@ -131,10 +154,7 @@ class CSPAgent(Agent):
 			
 		#If only one value - assign value to an unassigned card 
 		if len(domain) == 1:
-			for card in hand.get_cards():
-				if card.assignedValue == None and domain[0] in card.cur_domain():
-					card.assign(domain[0])
-					break
+			_assign(hand, domain[0])
 		else:
 			sets.append(domain)
 
