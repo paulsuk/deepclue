@@ -18,10 +18,6 @@ Information Theory Based: able to ask the least amount of questions necessary to
 
 '''
 
-ROOMS = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
-WEAPONS = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
-SUSPECTS = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
-
 # Seems like we will no longer need to do the conversion
 # total = ROOMS + WEAPONS + SUSPECTS
 # word_to_num = {k:v for k,v in list(enumerate(total))}
@@ -94,9 +90,6 @@ class Game(object):
 		self.rooms.pop(0)
 		self.weapons.pop(0)
 		self.suspects.pop(0)
-
-
-	def start(self):
 
 	def _distribute_cards(self):
 		'''
@@ -204,8 +197,6 @@ class Game(object):
 		observer.update_from_response(move, card_exchanged)
 
 		return card_exchanged
-
-
 
 	def case_file_cards(self):
 		return [self.caseFileRoom, self.caseFileWeapon, self.caseFileSuspect]
@@ -389,16 +380,23 @@ class Agent(object):
 		self.caseFileSuspect = Card(type="Suspect", domain=SUSPECTS)
 		self.caseFileRoom = Card(type="Room", domain=ROOMS)
 
-		#NEED a pruning method to prune our current cards from the casefile
+		self.CSP = CSP(name, [self.caseFileRoom, self.caseFileSuspect, self.caseFileWeapon])
+		roomConstraint = Constraint('Room', scope=[self.caseFileRoom])
+		suspectConstraint = Constraint('Suspect', scope=[self.caseFileSuspect])
+		weaponConstraint = Constraint('Weapon', scope=[self.caseFileWeapon])
 
+		roomSatisfyingTuples = [[x] for x in ROOMS]
+		suspectSatisfyingTuples = [[x] for x in SUSPECTS]
+		weaponSatisfyingTuples = [[x] for x in WEAPONS]
 
-	# def assign_order(self, order):
-	# 	'''
-	# 	Assign an order to agent given.
-	# 	1 goes first, asks 2, 2 asks 3, 3 asks 1. (order is 1->2->3->1...)
-	# 	'''
-	# 	self.order = order
+		roomConstraint.add_satisfying_tuples(roomSatisfyingTuples)
+		suspectConstraint.add_satisfying_tuples(suspectSatisfyingTuples)
+		weaponConstraint.add_satisfying_tuples(weaponSatisfyingTuples)
 
+		self.CSP.add_constraint(roomConstraint)
+		self.CSP.add_constraint(suspectConstraint)
+		self.CSP.add_constraint(weaponConstraint)
+		
 	def give_hand(self, hand):
 		'''
 		Ayo hand
