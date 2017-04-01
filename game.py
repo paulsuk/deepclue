@@ -291,7 +291,7 @@ class Agent(metaclass=abc.ABCMeta):
 		self.CSP.add_constraint(roomConstraint)
 		self.CSP.add_constraint(suspectConstraint)
 		self.CSP.add_constraint(weaponConstraint)
-		
+
 	def give_hand(self, hand):
 		'''
 		Initalize hand
@@ -304,7 +304,7 @@ class Agent(metaclass=abc.ABCMeta):
 			else if card.typ == 'Room':
 				self.caseFileRoom.prune_value(card.assignedValue)
 			else:
-				self.caseFileSuspect.prune_value(card.assignedValue)	
+				self.caseFileSuspect.prune_value(card.assignedValue)
 
 	@abc.abstractmethod
 	def make_move(self):
