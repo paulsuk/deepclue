@@ -1,5 +1,6 @@
 ''' This Agent assumes that all suggestions made by other Agents indicate that the respective agent does not
-possess those cards, and after all enemy agent hands are pruned, the casefile cards are pruned '''
+possess those cards, and after all enemy agent hands are pruned, the casefile cards are pruned.
+Shows cards randomly. '''
 from game import *
 import itertools
 
@@ -10,7 +11,7 @@ class PruneEnemiesAgent(Agent):
 
         # Initialize CSPs for other Agents
         # Begin by initializing the opposing agent's possible cards (and removing my cards)
-        domain = WEAPONS + ROOMS + SUSPECTS - self.cards
+        domain = [x for x in WEAPONS + ROOMS + SUSPECTS if x not in self.hand.get_cards()]
         p1cards = [Card(typ = None, domain=domain)]*6
         p2cards = [Card(typ = None, domain=domain)]*6
 
@@ -38,6 +39,9 @@ class PruneEnemiesAgent(Agent):
 
 		if (len(weapon_dom) == 1 and len(room_dom) == 1 and len(suspect_dom) == 1):
 			accusation = {}
+            self.caseFileWeapon.assign(weapon_dom[0])
+            self.caseFileRoom.assign(room_dom[0])
+            self.caseFileSuspect.assign(suspect_dom[0])
 			accusation['Room'] = self.caseFileRoom
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
@@ -55,7 +59,7 @@ class PruneEnemiesAgent(Agent):
 		give a response of a card if you have a card in suggestion, or None otherwise
 		'''
 
-		for card in self.hand:
+		for card in self.hand.get_cards():
 			if card.get_assigned_value() == suggestion.weapon:
 				return card
 			else if card.get_assigned_value() == suggestion.room:
@@ -92,21 +96,21 @@ class PruneEnemiesAgent(Agent):
             for card_list in [p1cards, p2cards]:
                 for card in card_list:
                     card.assign(card.cur_domain()[0])
-                    if card.cur_domain[0] in ROOMS:
+                    if card.get_assigned_value() in ROOMS:
                         self.caseFileRoom.prune_value(card.get_assigned_value())
-                    elif card.cur_domain[0] in WEAPONS:
+                    elif card.get_assigned_value() in WEAPONS:
                         self.caseFileWeapon.prune_value(card.get_assigned_value())
-                    elif card.cur_domain[0] in SUSPECTS:
+                    elif card.get_assigned_value() in SUSPECTS:
                         self.caseFileSuspect.prune_value(card.get_assigned_value())
 
             # Also prune the values that I hold in my hand
             for card in self.hand.cards:
                     card.assign(card.cur_domain()[0])
-                    if card.cur_domain()[0] in ROOMS:
+                    if card.get_assigned_value() in ROOMS:
                         self.caseFileRoom.prune_value(card.get_assigned_value())
-                    elif card.cur_domain()[0] in WEAPONS:
+                    elif card.get_assigned_value() in WEAPONS:
                         self.caseFileWeapon.prune_value(card.get_assigned_value())
-                    elif card.cur_domain()[0] in SUSPECTS:
+                    elif card.get_assigned_value() in SUSPECTS:
                         self.caseFileSuspect.prune_value(card.get_assigned_value())
 
             # Case file domain sizes should now be 1.
