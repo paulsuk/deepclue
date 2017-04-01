@@ -1,6 +1,6 @@
 from game import *
 
-class SimpleAgent(Agent):
+class SimpleRandom(Agent):
 
 	def make_move(self):
 		'''
@@ -8,9 +8,13 @@ class SimpleAgent(Agent):
 		suggestion is of type Suggestion
 		accusation is a dict where key is the type, and the value is the card
 		'''
-		weapon_dom = np.shuffle(self.caseFileWeapon.cur_dom())
-		room_dom = np.shuffle(self.caseFileRoom.cur_dom())
-		suspect_dom = np.shuffle(self.caseFileRoom.cur_dom())
+		weapon_dom = self.caseFileWeapon.cur_dom()
+		room_dom = self.caseFileRoom.cur_dom()
+		suspect_dom = self.caseFileRoom.cur_dom()
+
+		np.random.shuffle(weapon_dom)
+		np.random.shuffle(room_dom)
+		np.random.shuffle(suspect_dom)
 
 		if (weapon_dom.cur_domain_size() == 1 and room_dom.cur_domain_size() == 1 and suspect_dom.cur_domain_size() == 1):
 			accusation = {}
@@ -34,9 +38,9 @@ class SimpleAgent(Agent):
 		for card in self.Hand:
 			if card.assingedValue == suggestion.weapon:
 				return card
-			else if card.assignedValue == suggestion.room:
+			elif card.assignedValue == suggestion.room:
 				return card
-			else if card.assignedValue == suggestion.suspect:
+			elif card.assignedValue == suggestion.suspect:
 				return card
 		return None
 
@@ -57,13 +61,13 @@ class SimpleAgent(Agent):
 		if response is not None:
 			if response.typ == 'Weapon':
 				self.caseFileWeapon.prune_value(response.assignedValue)
-			else if response.typ == 'Room':
+			elif response.typ == 'Room':
 				self.caseFileRoom.prune_value(response.assignedValue)
 			else:
 				self.caseFileSuspect.prune_value(response.assignedValue)	
 		return
 
-	def observe_accusation(self, was_accuser, was_correct):
+	def observe_accusation(self, accuser_name, was_correct):
 		'''
 		made to respond to an accusation
 		was_accuser is true if the accusation was made by self, False otherwise

@@ -79,7 +79,7 @@ class Card:
 		'''Create a Card object, specifying its name (a
 		string). Optionally specify the initial domain.
 		'''
-		self.type = typ
+		self.typ = typ
 		self.dom = list(domain)		 #Make a copy of passed domain
 		self.curdom = [True] * len(domain)	  #using list
 		self.name = name

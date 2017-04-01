@@ -3,6 +3,7 @@ import abc
 import time
 import functools
 import numpy as np
+from SimpleRandom import *
 import pdb
 
 '''
@@ -17,12 +18,6 @@ CSP based: able to make a guessed accusation by noticing that other players have
 Information Theory Based: able to ask the least amount of questions necessary to attain the goal.
 
 '''
-
-# Seems like we will no longer need to do the conversion
-# total = ROOMS + WEAPONS + SUSPECTS
-# word_to_num = {k:v for k,v in list(enumerate(total))}
-# num_to_word = {v:k for k,v in word_to_num.items()}
-
 
 ROOMS = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
 WEAPONS = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
@@ -101,9 +96,10 @@ class Game(object):
 		hand2 = Hand()
 		hand3 = Hand()
 
-		all_cards = np.shuffle(np.array(self.rooms + self.weapons + self.suspects))
+		all_cards = self.rooms + self.weapons + self.suspects
+		np.random.shuffle(all_cards)
 
-		for i in range(all_cards.len()):
+		for i in range(len(all_cards)):
 			card = all_cards[i]
 			if i % 3 == 0:
 				hand1.add_card(card)
@@ -120,12 +116,13 @@ class Game(object):
 
 		TODO: check if agents are all classes/subclasses of Agent
 		'''
-		hand1, hand2, hand3 = self._distribute_cards
+		hand1, hand2, hand3 = self._distribute_cards()
 		agent1.give_hand(hand1)
 		agent2.give_hand(hand2)
 		agent3.give_hand(hand3)
 
-		self.agents = np.shuffle(np.array([agent1, agent2, agent3]))
+		self.agents = [agent1, agent2, agent3]
+		np.random.shuffle(self.agents)
 
 		player_order_dict = {}
 		for i in range(len(self.agents)):
@@ -139,49 +136,55 @@ class Game(object):
 		- keeping track of who's turn is it
 		- is game still going/did someone win?
 		- tell next player it's their turn
-		- returns the player who won
+		- returns the player who won's name, and the number of turns it took
 		'''
 		isNotEliminated = [True]*len(self.agents)
 		finished = False
 		i = 0
 
 		while not finished:
+			if not any(isNotEliminated):
+				# noone can make a move
+				print("All Players Eliminated!")
+				return None, i
 
 			if not isNotEliminated[i]:
 				# person can make a move
-				suggestor = self.agents[i]
+				suggester = self.agents[i]
 				responder = self.agents[(i + 1) % 3]
 				observer = self.agents[(i + 2) % 3]
+				print("ROUND {}: {}'s TURN TO MOVE".format(i, suggester.name))
 
-				move = suggestor.make_move()
+				move = suggester.make_move()
 
 				if isinstance(move, Suggestion):
-					# suggestor made a suggestion
+					# suggester made a suggestion
 
-					card_exchanged = self._made_suggestion(move, suggestor, responder, observer)
+					self._print_suggestion(suggester.name, suggestion)
+
+					card_exchanged = self._made_suggestion(move, suggester, responder, observer)
 
 					if not card_exchanged:
 						# ask the next player
 						move.responder = observer.name
-						_ = self._made_suggestion(move, suggestor, observer, responder)
+						card_exchanged = self._made_suggestion(move, suggester, observer, responder)
 
 				else:
-					# suggestor made an accusation
+					# suggester made an accusation
 					was_correct = self._check_accusation(move)
-					suggestor.observe_accusation(True, was_correct)
-					responder.observe_accusation(False, was_correct)
-					observer.observe_accusation(False, was_correct)
+					accuser_name = suggester.name
+					suggester.observe_accusation(accuser_name, was_correct)
+					responder.observe_accusation(accuser_name, was_correct)
+					observer.observe_accusation(accuser_name, was_correct)
 
 					if was_correct:
 						finished = True
 					else:
 						isNotEliminated[i] = False
 
-			if not any(isNotEliminated):
-				# noone can make a move
-				return
-			i = (i + 1) % 3
-		return suggestor
+				i = (i + 1) % 3
+
+		return suggester.name, i
 
 	def _check_accusation(self, accusation):
 		'''
@@ -200,16 +203,24 @@ class Game(object):
 
 	def _made_suggestion(self, move, suggester, responder, observer):
 		response = responder.respond_to_suggestion(move)
-		suggestor.update_from_response(move, response)
+		suggester.update_from_response(move, response)
 
 		card_exchanged = response is not None
 		observer.update_from_response(move, card_exchanged)
+
+		if card_exchanged:
+			print("{} showed {} to {}".format(responder.name, response.getName(), suggester.name))
+		else:
+			print("{} didn't have any of those cards".format(responder.name))
 
 		return card_exchanged
 
 	def case_file_cards(self):
 		return [self.caseFileRoom, self.caseFileWeapon, self.caseFileSuspect]
 
+	def _print_suggestion(self, suggester, suggestion):
+		cards = suggestion.get_cards()
+		print("suggester suggests: {}".format(cards))
 
 class Hand(object):
 	'''
@@ -219,7 +230,7 @@ class Hand(object):
 		'''
 		Initialize 6 empty card objects into hand
 		'''
-		self.cards = [Card('Room', 'needtochangethis')]*6
+		self.cards = [Card('Room', domain=WEAPONS+ROOMS+SUSPECTS)]*6
 
 	def add_card(self, card):
 		'''
@@ -229,7 +240,7 @@ class Hand(object):
 		THE RIGHT CARD, for now:
 		'''
 		for i, c in enumerate(self.cards):
-			if c.getName() == None:
+			if c.get_assigned_value() == None:
 				c = card
 				self.cards[i] = card
 				break
@@ -243,13 +254,13 @@ class Hand(object):
 				return True
 		return False
 
-	def getCards(self):
+	def get_cards(self):
 		return (list(self.cards))
 
 class Suggestion(object):
 
-	def __init__(self, suggestor, responder, weapon, room, suspect):
-		self.suggestor = suggestor
+	def __init__(self, suggester, responder, weapon, room, suspect):
+		self.suggester = suggester
 		self.responder = responder
 		self.weapon = weapon
 		self.room = room
@@ -319,10 +330,10 @@ class Agent(metaclass=abc.ABCMeta):
 		Prune cards in hand from the casefile domain
 		'''
 		self.hand = hand
-		for card in self.hand:
+		for card in self.hand.get_cards():
 			if card.typ == 'Weapon':
 				self.caseFileWeapon.prune_value(card.assignedValue)
-			else if card.typ == 'Room':
+			elif card.typ == 'Room':
 				self.caseFileRoom.prune_value(card.assignedValue)
 			else:
 				self.caseFileSuspect.prune_value(card.assignedValue)	
@@ -366,7 +377,7 @@ class Agent(metaclass=abc.ABCMeta):
 		return
 
 	@abc.abstractmethod
-	def observe_accusation(self, was_accuser, was_correct):
+	def observe_accusation(self, accuser_name, was_correct):
 		'''
 		made to respond to an accusation
 		was_accuser is true if the accusation was made by self, False otherwise
@@ -374,9 +385,12 @@ class Agent(metaclass=abc.ABCMeta):
 		'''
 		return
 
-
 if __name__ == '__main__':
 	game = Game()
-	agent1 = Agent()
-	game.init_players()
-	game.play
+	p1 = SimpleRandom('paul')
+	p2 = SimpleRandom('grace')
+	p3 = SimpleRandom('gabe')
+	game.init_players(p1, p2, p3)
+
+	name, i = game.play_game()
+	print("{} won after {} turns".format(name, i))
