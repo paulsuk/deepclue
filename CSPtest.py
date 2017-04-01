@@ -2,11 +2,12 @@
 and for the desired application. Use this as an example to build the game with the CSP'''
 
 from cspclue import *
+from game import *
 import time
 import functools
 import numpy as np
 import pdb
-from game import *
+
 
 if __name__ == '__main__':
 
@@ -48,7 +49,7 @@ if __name__ == '__main__':
 	#the card has to be one of either the room type, or the weapon type
 	#type, or person type
 
-	# Room card constraint
+	# Instantiate cards for every player (3 cards per player)
 	player1_CF1 = Card('Room', 'p1cfcard', ROOMS)
 	player2_CF1 = Card('Room', 'p2cfcard', ROOMS)
 	player3_CF1 = Card('Room', 'p3cfcard', ROOMS)
@@ -59,39 +60,45 @@ if __name__ == '__main__':
 	player2_CF3 = Card('person', 'p2cfcard3', SUSPECTS)
 	player3_CF3 = Card('person', 'p3cfcard3', SUSPECTS)
 
-	# Create CSP instances for every player
+	# Create CSP instances for every player, the variable list contains every one of that players variables
 	player1CSP = CSP('player1CSP', [player1_CF1 ,player1_CF2 ,player1_CF3])
 	player2CSP = CSP('player2CSP', [player2_CF1 ,player2_CF2 ,player2_CF3])
 	player3CSP = CSP('player3CSP', [player3_CF1 ,player3_CF2 ,player3_CF3])
 	csp_list = [player1CSP, player2CSP, player3CSP]
 
+    # Player 1 constraints
 	p1con0 = Constraint('con1', scope = [player1_CF1])
 	# Person card constraint
 	p1con1 = Constraint('con1', scope = [player1_CF2])
 	# Weapon card constraint
 	p1con2 = Constraint('con1', scope = [player1_CF3])
+
+    # Player 2 COnstraints
 	p2con0 = Constraint('con1', scope = [player2_CF1])
 	# Person card constraint
 	p2con1 = Constraint('con1', scope = [player2_CF2])
 	# Weapon card constraint
 	p2con2 = Constraint('con1', scope = [player2_CF3])
+
+    # Player 3 Constraints
 	p3con0 = Constraint('con1', scope = [player3_CF1])
 	# Person card constraint
 	p3con1 = Constraint('con1', scope = [player3_CF2])
 	# Weapon card constraint
 	p3con2 = Constraint('con1', scope = [player3_CF3])
 	con_list = [p1con0, p1con1, p1con2]
-	print("con1.scope", p1con1.scope)
 
 	# Add the satisfying tuples
 	p1con0.add_satisfying_tuples([(['Conservatory']), (['Hall']), (['Lounge']), (['Dining Room']), (['Kitchen']), (['Ballroom']), (['Billiard Room']), (['Library']), (['Study'])])
 	p1con1.add_satisfying_tuples([(['Candlestick']), (['Revolver']), (['Wrench']), (['Rope']), (['Lead Pipe']), (['Knife'])])
 	p1con2.add_satisfying_tuples([(['Miss Scarlett']), (['Mrs White']), (['Mr Green']), (['Mrs Peacock']), (['Colonel Mustard']), (['Professor Plum'])])
 
-	# Add these to all player's CSP
+	# Add of player 1's constraints to its CSP
 	player1CSP.add_constraint(p1con0)
 	player1CSP.add_constraint(p1con1)
 	player1CSP.add_constraint(p1con2)
 
-	for csp in csp_list:
-		map(lambda x: csp.add_constraint(x), con_list)
+	# for csp in csp_list:
+	# 	map(lambda x: csp.add_constraint(x), con_list)
+
+    # Example of pruning variables:

@@ -237,10 +237,7 @@ class Constraint:
 				self.sat_tuples[t] = True
 
 			#now put t in as a support for all of the Card values in it
-			print("t", t)
-			print(list(enumerate(t)))
 			for i, val in enumerate(t):
-				print(i)
 				var = self.scope[i]
 				if not (var,val) in self.sup_tuples:
 					self.sup_tuples[(var,val)] = []
