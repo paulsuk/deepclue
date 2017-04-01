@@ -23,8 +23,11 @@ class CSPAgent(Agent):
 		decide when to make a suggestion or accusation
 		suggestion is of type Suggestion
 		accusation is a dict where key is the type, and the value is the card
+
+		Update player
+		Update casefile
+		Make guess based on values not in sets
 		'''
-		_update(self)
 
 		weapon_dom = np.shuffle(self.caseFileWeapon.cur_dom())
 		room_dom = np.shuffle(self.caseFileRoom.cur_dom())
@@ -85,9 +88,19 @@ class CSPAgent(Agent):
 			else:
 				_prune_sug(suggestion, self.second_opponent_hand, self.second_opponent_sets)
 	
+
 	def _update_case(self, hand):
 		for card in hand.get_cards():
-			
+			if card.is_assigned():
+				if card.typ == 'Weapon' and card in self.caseFileWeapon.cur_dom():
+					self.caseFileWeapon.prune_value(card.assignedValue)
+				elif card.typ == 'Room' and card in self.caseFileRoom.cur_dom():
+					self.caseFileRoom.prune_value(card.assignedValue)
+				elif card.typ == 'Suspect' and card in self.caseFileSuspect.cur_dom():
+					self.caseFileSuspect.prune_value(response.assignedValue)
+				else:
+					continue
+
 
 	def _update_player(self, hand, sets):
 		'''
@@ -162,6 +175,15 @@ class CSPAgent(Agent):
 	def update_from_response(self, suggestion, response):
 		'''
 		after making a suggestion, this method will be called to respond to a response
+
+		TODO:
+		- Doesnt have 
+			- prune from domain of sets
+			- prune from paul's hand
+		- Does have 
+			- prune domain from sets
+			- prune from casefile
+
 
 		'''
 		if response is not None:
