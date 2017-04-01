@@ -1,6 +1,6 @@
 from game import *
 
-class SimpleAgent(Agent):
+class SimpleRandom(Agent):
 
 	def make_move(self):
 		'''
@@ -8,18 +8,30 @@ class SimpleAgent(Agent):
 		suggestion is of type Suggestion
 		accusation is a dict where key is the type, and the value is the card
 		'''
-		weapon_dom = np.shuffle(self.caseFileWeapon.cur_dom())
-		room_dom = np.shuffle(self.caseFileRoom.cur_dom())
-		suspect_dom = np.shuffle(self.caseFileRoom.cur_dom())
+		weapon_dom = self.caseFileWeapon.cur_domain()
+		room_dom = self.caseFileRoom.cur_domain()
+		suspect_dom = self.caseFileSuspect.cur_domain()
 
-		if (weapon_dom.cur_domain_size() == 1 and room_dom.cur_domain_size() == 1 and suspect_dom.cur_domain_size() == 1):
+		np.random.shuffle(weapon_dom)
+		np.random.shuffle(room_dom)
+		np.random.shuffle(suspect_dom)
+
+		if (len(weapon_dom) == 1 and len(room_dom) == 1 and len(suspect_dom) == 1):
+			room_value = self.caseFileRoom.cur_domain()[0]
+			weapon_value = self.caseFileWeapon.cur_domain()[0]
+			suspect_value = self.caseFileSuspect.cur_domain()[0]
+
+			self.caseFileRoom.assign(room_value)
+			self.caseFileWeapon.assign(weapon_value)
+			self.caseFileSuspect.assign(suspect_value)
+
 			accusation = {}
 			accusation['Room'] = self.caseFileRoom
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
 			return accusation
 		else:
-			suggestion = Suggestion(self.name, self.firstPlayerName, weapon_dom[0], room_dom[0], suspect_dom[0])
+			suggestion = Suggestion(self.name, self.firstOppName, weapon_dom[0], room_dom[0], suspect_dom[0])
 			return suggestion
 
 	def respond_to_suggestion(self, suggestion):
@@ -31,12 +43,12 @@ class SimpleAgent(Agent):
 		give a response of a card if you have a card in suggestion, or None otherwise
 		'''
 
-		for card in self.Hand:
-			if card.assingedValue == suggestion.weapon:
+		for card in self.hand.get_cards():
+			if card.assignedValue == suggestion.weapon:
 				return card
-			else if card.assignedValue == suggestion.room:
+			elif card.assignedValue == suggestion.room:
 				return card
-			else if card.assignedValue == suggestion.suspect:
+			elif card.assignedValue == suggestion.suspect:
 				return card
 		return None
 
@@ -57,19 +69,16 @@ class SimpleAgent(Agent):
 		if response is not None:
 			if response.typ == 'Weapon':
 				self.caseFileWeapon.prune_value(response.assignedValue)
-			else if response.typ == 'Room':
+			elif response.typ == 'Room':
 				self.caseFileRoom.prune_value(response.assignedValue)
 			else:
 				self.caseFileSuspect.prune_value(response.assignedValue)	
 		return
 
-	def observe_accusation(self, was_accuser, was_correct):
+	def observe_accusation(self, accuser_name, was_correct):
 		'''
 		made to respond to an accusation
 		was_accuser is true if the accusation was made by self, False otherwise
 		was_correct is true if the accusation was correct (and the game ends)
 		'''
 		return
-
-if __name__ == '__main__':
-	agent = SimpleAgent('Player1')

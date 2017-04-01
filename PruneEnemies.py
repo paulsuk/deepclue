@@ -124,11 +124,11 @@ class PruneEnemiesAgent(Agent):
 		'''
 		if response is not None:
 			if response.typ == 'Weapon':
-				self.caseFileWeapon.prune_value(response.assignedValue)
+				self.caseFileWeapon.prune_value(response.get_assigned_value())
 			elif response.typ == 'Room':
-				self.caseFileRoom.prune_value(response.assignedValue)
+				self.caseFileRoom.prune_value(response.get_assigned_value())
 			else:
-				self.caseFileSuspect.prune_value(response.assignedValue)
+				self.caseFileSuspect.prune_value(response.get_assigned_value())
 		return
 
 	def observe_accusation(self, was_accuser, was_correct):
