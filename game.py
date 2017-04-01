@@ -117,6 +117,8 @@ class Game(object):
 	def add_players(self, agent1, agent2, agent3):
 		'''
 		Adds 3 agents, initializes them and gives them cards
+
+		TODO: check if agents are all classes/subclasses of Agent
 		'''
 		hand1, hand2, hand3 = self._distribute_cards
 		agent1.give_hand(hand1)
@@ -202,113 +204,6 @@ class Game(object):
 		return [self.caseFileRoom, self.caseFileWeapon, self.caseFileSuspect]
 
 
-class Card(object):
-	'''
-	VARIABLE CLASS:
-	type = <Room, Suspect, Weapon>
-	name = <Miss Scarlett, Lead Pipe, Study .. >
-	owner - player that holds the card
-	dom - dom is list of names card can take on or
-		- only contains name of card
-	curdom - current domain
-	assignedName - Name of card is known / tent assigned to
-	'''
-	def __init__(self, type=None, name=None, domain=[]):
-		'''
-		Initialize a card with a type = <Room, Suspect, Weapon>
-		and a name = <Miss Scarlett, Lead Pipe, Lounge, ...>
-		'''
-		self.type = type
-		self.name = name
-
-		self.dom = list(domain)
-		self.curdom = [True] * len(domain)
-
-		self.assignedName = name
-
-	def getType(self):
-		return (self.type)
-
-	def getName(self):
-		return (self.name)
-
-	def getDomainSize(self):
-		return (len(self.dom))
-
-	def getDom(self):
-		return (list(self.dom))
-
-	def print_all(self):
-		'''Also print the variable domain and current domain'''
-		print("Type, Name--\"{}{}\": Dom = {}, CurDom = {}".format(self.type, self.name, self.dom, self.curdom))
-
-	def value_index(self, name):
-		'''Domain values need not be numbers, so return the index
-		in the domain list of a variable value'''
-		return self.dom.index(name)
-
-	#methods for current domain
-	def cur_domain(self):
-		'''return list of values in CURRENT domain (if assigned
-		only assigned value is viewed as being in current domain)'''
-		vals = []
-		if self.is_assigned():
-			vals.append(self.get_assigned_name())
-		else:
-			for i, val in enumerate(self.dom):
-				if self.curdom[i]:
-					vals.append(val)
-		return vals
-
-	def in_cur_domain(self, value):
-		'''check if value is in CURRENT domain (without constructing list)
-		   if assigned only assigned value is viewed as being in current
-		   domain'''
-		if not value in self.dom:
-		    return False
-		if self.is_assigned():
-		    return value == self.get_assigned_name()
-		else:
-		    return self.curdom[self.value_index(value)]
-
-	def cur_domain_size(self):
-		'''Return the size of the variables domain (without construcing list)'''
-		if self.is_assigned():
-		    return 1
-		else:
-		    return(sum(1 for v in self.curdom if v))
-
-	def restore_curdom(self):
-		'''return all values back into CURRENT domain'''
-		for i in range(len(self.curdom)):
-			self.curdom[i] = True
-
-	#methods for assigning and unassigning
-	def is_assigned(self):
-	   	return self.assignedName != None
-
-	def get_assigned_name(self):
-		'''return assigned value .. returns None if is unassigned'''
-		return self.assignedName
-
-	def assign(self, name):
-		'''Used by bt_search. When we assign we remove all other values
-		   values from curdom. We save this information so that we can
-		   reverse it on unassign'''
-
-		if self.is_assigned() or not self.in_cur_domain(name):
-		    print("ERROR: trying to assign variable", self,
-		          "that is already assigned or illegal value (not in curdom)")
-		    return
-		self.assignedName = name
-
-	def unassign(self):
-		'''Used by bt_search. Unassign and restore old curdom'''
-		if not self.is_assigned():
-		    print("ERROR: trying to unassign variable", self, " not yet assigned")
-		    return
-		self.assignedName = None
-
 class Hand(object):
 	'''
 	6 cards
@@ -356,8 +251,7 @@ class Suggestion(object):
 	def get_cards(self):
 		return [self.room, self.weapon, self.suspect]
 
-class Agent(object):
-	__metaclass__ = abc.ABCMeta
+class Agent(metaclass=abc.ABCMeta):
 	'''
 	Hand
 
@@ -376,9 +270,10 @@ class Agent(object):
 		- DONE Initialize ghost cards for case file (csp)
 		'''
 		self.name = name
-		self.caseFileWeapon = Card(type="Weapon", domain=WEAPONS)
-		self.caseFileSuspect = Card(type="Suspect", domain=SUSPECTS)
-		self.caseFileRoom = Card(type="Room", domain=ROOMS)
+
+		self.caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
+		self.caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
+		self.caseFileRoom = Card(typ="Room", domain=ROOMS)
 
 		self.CSP = CSP(name, [self.caseFileRoom, self.caseFileSuspect, self.caseFileWeapon])
 		roomConstraint = Constraint('Room', scope=[self.caseFileRoom])

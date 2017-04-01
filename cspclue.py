@@ -75,7 +75,7 @@ class Card:
 	#
 	#set up and info methods
 	#
-	def __init__(self, typ, name, domain=[]):
+	def __init__(self, typ, name=None, domain=[]):
 		'''Create a Card object, specifying its name (a
 		string). Optionally specify the initial domain.
 		'''
