@@ -113,24 +113,17 @@ class Card(object):
 		'''
 		self.type = type
 		self.name = name
-		self.player = None
 
 		self.dom = list(domain)
 		self.curdom = [True] * len(domain)
 
 		self.assignedName = name
 
-	def assignPlayer(self, player):
-		self.player = player
-
 	def getType(self):
 		return (self.type)
 	
 	def getName(self):
 		return (self.name)
-	
-	def getPlayer(self):
-		return (self.player)
 
 	def getDomainSize(self):
 		return (len(self.dom))
