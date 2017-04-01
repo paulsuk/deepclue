@@ -12,8 +12,11 @@ class CSPAgent(Agent):
 		self.first_opponent_hand = pruneHand(Hand())
 		self.second_opponent_hand = pruneHand(Hand())
 
-		self.CSP_first_opponent = CSP(self.firstOppName, self.first_opponent_hand.getCards())
-		self.CSP_second_opponent = CSP(self.secondOppName, self.second_opponent_hand.getCards())
+		#self.CSP_first_opponent = CSP(self.firstOppName, self.first_opponent_hand.getCards())
+		#self.CSP_second_opponent = CSP(self.secondOppName, self.second_opponent_hand.getCards())
+
+		self.first_opponent_sets = []
+		self.second_opponent_sets = []
 
 	def make_move(self):
 		'''
@@ -21,6 +24,8 @@ class CSPAgent(Agent):
 		suggestion is of type Suggestion
 		accusation is a dict where key is the type, and the value is the card
 		'''
+		_update(self)
+
 		weapon_dom = np.shuffle(self.caseFileWeapon.cur_dom())
 		room_dom = np.shuffle(self.caseFileRoom.cur_dom())
 		suspect_dom = np.shuffle(self.caseFileSuspect.cur_dom())
@@ -62,29 +67,77 @@ class CSPAgent(Agent):
 		suggestion - of type SUGGESTION
 		did_respond - boolean to see if the responder sent a card back or not
 
-		CSPAgent: Add constraints based on interactions between first op and second op
+		CSPAgent: Add constraints to set
 		'''
 		#Add constraints to one card
 		if did_respond:
-			suggestion_constraint = Constraint(suggestion.weapon+'x'
-				+suggestion.room+'x'+suggestion.suspect, scope=self.first_opponent_hand.get_cards())
+			if suggestion.responder == self.firstOppName:
+				_update_set(suggestion, self.first_opponent_hand, self.first_opponent_sets)
+			else:
+				_update_set(suggestion, self.second_opponent_hand, self.second_opponent_sets)
 			
 		#If opponent did not respond, they do not have the suggested
 		#Weapon, room or suspect. Prune these from their cards.
+		#Also, prune values from domains in sets
 		else:
 			if suggestion.responder == self.firstOppName:
-				for card in first_opponent_hand.get_cards():
-					if card.assignedValue == None:
-						card.prune_value(suggestion.weapon)
-						card.prune_value(suggestion.room)
-						card.prune_value(suggestion.suspect)
+				_prune_sug(suggestion, self.first_opponent_hand, self.first_opponent_sets)
 			else:
-				for card in second_opponent_hand.get_cards():
-					if card.assignedValue == None:
-						card.prune_value(suggestion.weapon)
-						card.prune_value(suggestion.room)
-						card.prune_value(suggestion.suspect)
-		return
+				_prune_sug(suggestion, self.second_opponent_hand, self.second_opponent_sets)
+				
+	def _update_player(self, hand, sets):
+		'''
+		Update player's set and hand by pruning cards with domain of length 1
+		and the entire domain if a value in it is already assigned to a card
+		'''
+		assigned = hand.get_assigned_card_values()
+		
+		
+
+	def _prune_sug(self, suggestion, hand, sets):
+		'''
+		Prune all elements of suggestion from all cards in hand
+		'''
+		#Remove from curdom
+		for card in hand.get_cards():
+			if card.assignedValue == None:
+				card.prune_value(suggestion.weapon)
+				card.prune_value(suggestion.room)
+				card.prune_value(suggestion.suspect)
+		#Remove from sets
+		for domain, i in enumerate(sets):
+			domain = [x for x in domain if (x != suggestion.suspect or x!= suggestion.room or x!=suggestion.weapon)]
+			sets[i] = domain
+
+	def _update_set(self, suggestion, hand, sets):
+		'''
+		Helper fn for observe_suggestion:
+		- add constraints to represent potential values for a card
+		'''
+		domain = []
+		#Populate domain
+		for card in hand.get_cards():
+			#Do not add constraint if already know what card (or a card that) was shown
+			if (card.get_assigned_value() == suggestion.weapon or card.get_assigned_value() == suggestion.room 
+				or card.get_assigned_value() == suggestion.suspect):
+				return
+
+			if suggestion.weapon in card.cur_domain() and suggestion.weapon not in domain:
+				domain.append(suggestion.weapon)
+			if suggestion.room in card.cur_domain() and suggestion.room not in domain:
+				domain.append(suggestion.room)
+			if suggestion.suspect in card.cur_domain() and suggestion.suspect not in domain:
+				domain.append(suggestion.suspect)
+			
+		#If only one value - assign value to an unassigned card 
+		if len(domain) == 1:
+			for card in hand.get_cards():
+				if card.assignedValue == None and domain[0] in card.cur_domain():
+					card.assign(domain[0])
+					break
+		else:
+			sets.append(domain)
+
 
 	def update_from_response(self, suggestion, response):
 		'''

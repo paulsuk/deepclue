@@ -187,6 +187,16 @@ class Game(object):
 
 		return suggester.name, turn_num
 
+	def reset(self):
+		self._init_cards()
+		self._make_case_file()
+		players = self.agents
+		p1, p2, p3 = players[0], players[1], players[2]
+		p1.reset()
+		p2.reset()
+		p3.reset()
+		self.init_players(p1, p2, p3)
+
 	def _check_accusation(self, accusation):
 		'''
 		Returns True if accusation is correct
@@ -233,3 +243,10 @@ if __name__ == '__main__':
 
 	name, i = game.play_game()
 	print("{} won after {} turns".format(name, i))
+
+	game.reset()
+
+	name, i = game.play_game()
+	print("{} won after {} turns".format(name, i))
+
+

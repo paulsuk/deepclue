@@ -589,6 +589,26 @@ class Hand(object):
 	def get_cards(self):
 		return (list(self.cards))
 
+	def pruneHand(self, opponent_hand):
+		'''
+		Prunes opponent_hand of card values in self.hand 
+		'''
+		for my_card in self.cards:
+		  for op_card in opponent_hand.hand:
+		    op_card.prune_vale(my_card.assignedValue)
+		return opponent_hand
+
+	def get_assigned_card_values(self):
+		'''
+		Returns list of assigned values of cards
+		in hand
+		'''
+		assigned = []
+		for c in self.cards:
+			assigned.append(c.get_assigned_value())
+		return assigned
+
+
 class Suggestion(object):
 
 	def __init__(self, suggester, responder, weapon, room, suspect):
@@ -620,12 +640,14 @@ class Agent(metaclass=abc.ABCMeta):
 		- DONE Initialize ghost cards for case file (csp)
 		'''
 		self.name = name
+		self._init_csp()
 
+	def _init_csp(self):
 		self.caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
 		self.caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
 		self.caseFileRoom = Card(typ="Room", domain=ROOMS)
 
-		self.CSP = CSP(name, [self.caseFileRoom, self.caseFileSuspect, self.caseFileWeapon])
+		self.CSP = CSP(self.name, [self.caseFileRoom, self.caseFileSuspect, self.caseFileWeapon])
 		roomConstraint = Constraint('Room', scope=[self.caseFileRoom])
 		suspectConstraint = Constraint('Suspect', scope=[self.caseFileSuspect])
 		weaponConstraint = Constraint('Weapon', scope=[self.caseFileWeapon])
@@ -667,7 +689,10 @@ class Agent(metaclass=abc.ABCMeta):
 			elif card.typ == 'Room':
 				self.caseFileRoom.prune_value(card.assignedValue)
 			else:
-				self.caseFileSuspect.prune_value(card.assignedValue)	
+				self.caseFileSuspect.prune_value(card.assignedValue)
+
+	def reset(self):
+		self._init_csp()
 
 	@abc.abstractmethod
 	def make_move(self):
