@@ -1,8 +1,31 @@
+from cspclue import *
 import abc
-import cspclue
 import time
 import functools
 import numpy as np
+import pdb
+
+'''
+Gabe - csp base and how to instantiate and stuff , how to add constraints and stuff
+Paul - players doing stuff
+Grace - hands
+
+Goals are written in order of importance
+CSP based: able to make an accusation once the player has directly received all necessary information.
+CSP based: able to make an accusation once the player has indirectly received all necessary information (inferring from answers of other players).
+CSP based: able to make a guessed accusation by noticing that other players have received 100% of their required information.
+Information Theory Based: able to ask the least amount of questions necessary to attain the goal.
+
+'''
+
+ROOMS = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
+WEAPONS = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
+SUSPECTS = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
+
+# Seems like we will no longer need to do the conversion
+# total = ROOMS + WEAPONS + SUSPECTS
+# word_to_num = {k:v for k,v in list(enumerate(total))}
+# num_to_word = {v:k for k,v in word_to_num.items()}
 
 
 ROOMS = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
@@ -25,7 +48,7 @@ class Game(object):
 		- [DONE] Create all cards
 		- [DONE] Assign case file (randomly)
 		- Initialize agents
-		- assign cards to agents (Randomly)			
+		- assign cards to agents (Randomly)
 		- Choose a player to go first
 		'''
 		self._init_cards()
@@ -57,7 +80,7 @@ class Game(object):
 			s = Card('Suspect', suspect, [suspect])
 			self.suspects.append(s)
 		np.random.shuffle(self.suspects)
-	
+
 	def _make_case_file(self):
 		'''
 		Assign Case Files from the shuffled lists
@@ -71,6 +94,9 @@ class Game(object):
 		self.rooms.pop(0)
 		self.weapons.pop(0)
 		self.suspects.pop(0)
+
+
+	def start(self):
 
 	def _distribute_cards(self):
 		'''
@@ -148,7 +174,7 @@ class Game(object):
 						return suggestor
 					else:
 						isNotEliminated[i] = False
-					
+
 			if not any(isNotEliminated):
 				# noone can make a move
 				return
@@ -160,7 +186,7 @@ class Game(object):
 		Returns True if accusation is correct
 		Return False if accusation is incorrect
 
-		accusation is a dict: keys are: <"Room", "Suspect", "Weapon"> 
+		accusation is a dict: keys are: <"Room", "Suspect", "Weapon">
 		'''
 		if accusation["Room"].getName() != self.caseFileRoom.getName():
 			return False
@@ -181,13 +207,17 @@ class Game(object):
 
 
 
+	def case_file_cards(self):
+		return [self.caseFileRoom, self.caseFileWeapon, self.caseFileSuspect]
+
+
 class Card(object):
 	'''
 	VARIABLE CLASS:
 	type = <Room, Suspect, Weapon>
 	name = <Miss Scarlett, Lead Pipe, Study .. >
 	owner - player that holds the card
-	dom - dom is list of names card can take on or 
+	dom - dom is list of names card can take on or
 		- only contains name of card
 	curdom - current domain
 	assignedName - Name of card is known / tent assigned to
@@ -207,7 +237,7 @@ class Card(object):
 
 	def getType(self):
 		return (self.type)
-	
+
 	def getName(self):
 		return (self.name)
 
@@ -228,7 +258,7 @@ class Card(object):
 
 	#methods for current domain
 	def cur_domain(self):
-		'''return list of values in CURRENT domain (if assigned 
+		'''return list of values in CURRENT domain (if assigned
 		only assigned value is viewed as being in current domain)'''
 		vals = []
 		if self.is_assigned():
@@ -238,10 +268,10 @@ class Card(object):
 				if self.curdom[i]:
 					vals.append(val)
 		return vals
-	
+
 	def in_cur_domain(self, value):
 		'''check if value is in CURRENT domain (without constructing list)
-		   if assigned only assigned value is viewed as being in current 
+		   if assigned only assigned value is viewed as being in current
 		   domain'''
 		if not value in self.dom:
 		    return False
@@ -249,44 +279,44 @@ class Card(object):
 		    return value == self.get_assigned_name()
 		else:
 		    return self.curdom[self.value_index(value)]
-	
+
 	def cur_domain_size(self):
 		'''Return the size of the variables domain (without construcing list)'''
 		if self.is_assigned():
 		    return 1
 		else:
 		    return(sum(1 for v in self.curdom if v))
-	
+
 	def restore_curdom(self):
 		'''return all values back into CURRENT domain'''
 		for i in range(len(self.curdom)):
 			self.curdom[i] = True
-	
+
 	#methods for assigning and unassigning
 	def is_assigned(self):
 	   	return self.assignedName != None
-	
+
 	def get_assigned_name(self):
 		'''return assigned value .. returns None if is unassigned'''
 		return self.assignedName
-	
+
 	def assign(self, name):
 		'''Used by bt_search. When we assign we remove all other values
 		   values from curdom. We save this information so that we can
 		   reverse it on unassign'''
 
 		if self.is_assigned() or not self.in_cur_domain(name):
-		    print("ERROR: trying to assign variable", self, 
+		    print("ERROR: trying to assign variable", self,
 		          "that is already assigned or illegal value (not in curdom)")
 		    return
 		self.assignedName = name
-	
+
 	def unassign(self):
 		'''Used by bt_search. Unassign and restore old curdom'''
 		if not self.is_assigned():
 		    print("ERROR: trying to unassign variable", self, " not yet assigned")
 		    return
-		self.assignedName = None   	
+		self.assignedName = None
 
 class Hand(object):
 	'''
@@ -296,13 +326,13 @@ class Hand(object):
 		'''
 		Initialize 6 empty card objects into hand
 		'''
-		self.cards = [Card()]*6
+		self.cards = [Card('Room', 'needtochangethis')]*6
 
 	def add_card(self, card):
 		'''
 		Initialize an empty card as card if empty cards exist
 
-		NOTE: MIGHT NEED TO MAKE THIS MORE SPECIFIC TO ENSURE TO TARGETS 
+		NOTE: MIGHT NEED TO MAKE THIS MORE SPECIFIC TO ENSURE TO TARGETS
 		THE RIGHT CARD, for now:
 		'''
 		for i, c in enumerate(self.cards):
@@ -364,7 +394,7 @@ class Agent(object):
 
 	# def assign_order(self, order):
 	# 	'''
-	# 	Assign an order to agent given. 
+	# 	Assign an order to agent given.
 	# 	1 goes first, asks 2, 2 asks 3, 3 asks 1. (order is 1->2->3->1...)
 	# 	'''
 	# 	self.order = order
@@ -422,6 +452,6 @@ class Agent(object):
 		'''
 		return
 
+
 if __name__ == '__main__':
 	game = Game()
-	# different agents must be initialized here, and then added to the game
