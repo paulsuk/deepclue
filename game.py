@@ -58,7 +58,6 @@ class Game(object):
 			self.suspects.append(s)
 		np.random.shuffle(self.suspects)
 	
-
 	def _make_case_file(self):
 		'''
 		Assign Case Files from the shuffled lists
@@ -101,56 +100,82 @@ class Game(object):
 		Adds 3 agents, initializes them and gives them cards
 		'''
 		hand1, hand2, hand3 = self._distribute_cards
-		agent1.assign_order(1)
 		agent1.give_hand(hand1)
-		agent2.assign_order(2)
 		agent2.give_hand(hand2)
-		agent3.assign_order(3)
 		agent3.give_hand(hand3)
 
 		self.agents = np.shuffle(np.array([agent1, agent2, agent3]))
-
 
 	def play_game(self):
 		'''
 		- keeping track of who's turn is it
 		- is game still going/did someone win?
 		- tell next player it's their turn
+		- returns the player who won
 		'''
-		isEliminated = [False]*len(self.agents)
+		isNotEliminated = [True]*len(self.agents)
 		finished = False
 		i = 0
 
 		while not finished:
-			suggestor = self.agents[i]
 
-			move = suggestor.make_move()
-
-			if isinstance(move, Suggestion):
-				# suggestor made a suggestion
+			if not isNotEliminated[i]:
+				# person can make a move
+				suggestor = self.agents[i]
 				responder = self.agents[(i + 1) % 3]
 				observer = self.agents[(i + 2) % 3]
 
-				card_exchanged = self._made_suggestion(move, suggestor, responder, observer)
+				move = suggestor.make_move()
 
-				if not card_exchanged:
-					# ask the next player
-					move.responder = observer.name
-					_ = self._made_suggestion(move, suggestor, observer, responder)
+				if isinstance(move, Suggestion):
+					# suggestor made a suggestion
 
-			else:
-				# suggestor made an accusation
+					card_exchanged = self._made_suggestion(move, suggestor, responder, observer)
 
+					if not card_exchanged:
+						# ask the next player
+						move.responder = observer.name
+						_ = self._made_suggestion(move, suggestor, observer, responder)
+
+				else:
+					# suggestor made an accusation
+					was_correct = self._check_accusation(move)
+					suggestor.observe_accusation(True, was_correct)
+					responder.observe_accusation(False, was_correct)
+					observer.observe_accusation(False, was_correct)
+
+					if was_correct:
+						return suggestor
+					else:
+						isNotEliminated[i] = False
+					
+			if not any(isNotEliminated):
+				# noone can make a move
+				return
 			i = (i + 1) % 3
-
 		return
+
+	def _check_accusation(self, accusation):
+		'''
+		Returns True if accusation is correct
+		Return False if accusation is incorrect
+
+		accusation is a dict: keys are: <"Room", "Suspect", "Weapon"> 
+		'''
+		if accusation["Room"].getName() != self.caseFileRoom.getName():
+			return False
+		if accusation["Suspect"].getName() != self.caseFileSuspect.getName():
+			return False
+		if accusation["Weapon"].getName() != self.caseFileWeapon.getName():
+			return False
+		return True
 
 	def _made_suggestion(self, move, suggester, responder, observer):
 		response = responder.respond_to_suggestion(move)
-		suggestor.observe_response(move, response)
+		suggestor.update_from_response(move, response)
 
 		card_exchanged = response is not None
-		observer.observe_suggestion(move, card_exchanged)
+		observer.update_from_response(move, card_exchanged)
 
 		return card_exchanged
 
@@ -268,8 +293,7 @@ class Card(object):
 		if not self.is_assigned():
 		    print("ERROR: trying to unassign variable", self, " not yet assigned")
 		    return
-		self.assignedName = None
-   	
+		self.assignedName = None   	
 
 class Hand(object):
 	'''
@@ -362,6 +386,8 @@ class Agent(object):
 	def make_move(self):
 		'''
 		decide when to make a suggestion or accusation
+		suggestion is of type Suggestion
+		accusation is a dict where key is the type, and the value is the card
 		'''
 		return
 
@@ -387,10 +413,19 @@ class Agent(object):
 		return
 
 	@abc.abstractmethod
-	def observe_response(self, suggestion, response):
+	def update_from_response(self, suggestion, response):
 		'''
 		after making a suggestion, this method will be called to respond to a response
 
+		'''
+		return
+
+	@abc.abstractmethod
+	def observe_accusation(self, was_accuser, was_correct):
+		'''
+		made to respond to an accusation
+		was_accuser is true if the accusation was made by self, False otherwise
+		was_correct is true if the accusation was correct (and the game ends)
 		'''
 		return
 
