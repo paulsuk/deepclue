@@ -1,5 +1,12 @@
+import abc
 import time
 import functools
+import pdb
+
+ROOMS = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
+WEAPONS = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
+SUSPECTS = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
+
 
 '''Constraint Satisfaction Routines
    A) class Card
@@ -83,7 +90,7 @@ class Card:
 		self.dom = list(domain)		 #Make a copy of passed domain
 		self.curdom = [True] * len(domain)	  #using list
 		self.name = name
-		self.assignedValue = None
+		self.assignedValue = name
 
 	def add_domain_values(self, values):
 		'''Add additional domain values to the domain
@@ -546,3 +553,165 @@ class BT:
 
 			self.restoreUnasgnVar(var)
 			return False
+
+class Hand(object):
+	'''
+	6 cards
+	'''
+	def __init__(self):
+		'''
+		Initialize 6 empty card objects into hand
+		'''
+		self.cards = [Card('Room', domain=WEAPONS+ROOMS+SUSPECTS)]*6
+
+	def add_card(self, card):
+		'''
+		Initialize an empty card as card if empty cards exist
+
+		NOTE: MIGHT NEED TO MAKE THIS MORE SPECIFIC TO ENSURE TO TARGETS
+		THE RIGHT CARD, for now:
+		'''
+		for i, c in enumerate(self.cards):
+			if c.get_assigned_value() == None:
+				c = card
+				self.cards[i] = card
+				break
+
+	def isInHand(self, name):
+		'''
+		Returns true if a card in the hand is assigned name
+		'''
+		for c in self.cards:
+			if c.name == name:
+				return True
+		return False
+
+	def get_cards(self):
+		return (list(self.cards))
+
+class Suggestion(object):
+
+	def __init__(self, suggester, responder, weapon, room, suspect):
+		self.suggester = suggester
+		self.responder = responder
+		self.weapon = weapon
+		self.room = room
+		self.suspect = suspect
+
+	def get_cards(self):
+		return [self.room, self.weapon, self.suspect]
+
+class Agent(metaclass=abc.ABCMeta):
+	'''
+	Hand
+
+	create blank instance of Hand for each other player
+
+	instance of csp or something
+	gabes a bitch
+	'''
+	def __init__(self, name):
+		'''
+		init hand and shit
+		opponents
+
+		- DONE Initialize their own hand (given from game class)
+		- Initialize ghost hands for 2 oponents (csp*2)
+		- DONE Initialize ghost cards for case file (csp)
+		'''
+		self.name = name
+
+		self.caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
+		self.caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
+		self.caseFileRoom = Card(typ="Room", domain=ROOMS)
+
+		self.CSP = CSP(name, [self.caseFileRoom, self.caseFileSuspect, self.caseFileWeapon])
+		roomConstraint = Constraint('Room', scope=[self.caseFileRoom])
+		suspectConstraint = Constraint('Suspect', scope=[self.caseFileSuspect])
+		weaponConstraint = Constraint('Weapon', scope=[self.caseFileWeapon])
+
+		roomSatisfyingTuples = [[x] for x in ROOMS]
+		suspectSatisfyingTuples = [[x] for x in SUSPECTS]
+		weaponSatisfyingTuples = [[x] for x in WEAPONS]
+
+		roomConstraint.add_satisfying_tuples(roomSatisfyingTuples)
+		suspectConstraint.add_satisfying_tuples(suspectSatisfyingTuples)
+		weaponConstraint.add_satisfying_tuples(weaponSatisfyingTuples)
+
+		self.CSP.add_constraint(roomConstraint)
+		self.CSP.add_constraint(suspectConstraint)
+		self.CSP.add_constraint(weaponConstraint)
+		
+	def init_player_orders(self, order_dict):
+		'''
+		order_dict is a dictionary that maps player numbers to their names
+		'''
+
+		for key in order_dict:
+			if order_dict[key] == self.name:
+				self.playerNum = key
+				break
+
+		self.firstOppName = order_dict[(self.playerNum + 1) % 3]
+		self.secondOppName = order_dict[(self.playerNum + 2) % 3]
+
+	def give_hand(self, hand):
+		'''
+		Initalize hand
+		Prune cards in hand from the casefile domain
+		'''
+		self.hand = hand
+		for card in self.hand.get_cards():
+			if card.typ == 'Weapon':
+				self.caseFileWeapon.prune_value(card.assignedValue)
+			elif card.typ == 'Room':
+				self.caseFileRoom.prune_value(card.assignedValue)
+			else:
+				self.caseFileSuspect.prune_value(card.assignedValue)	
+
+	@abc.abstractmethod
+	def make_move(self):
+		'''
+		decide when to make a suggestion or accusation
+		suggestion is of type Suggestion
+		accusation is a dict where key is the type, and the value is the card
+		'''
+		return
+
+	@abc.abstractmethod
+	def respond_to_suggestion(self, suggestion):
+		'''
+		update knowledge base with whatever from game
+
+		Update CSPs
+
+		give a response of a card if you have a card in suggestion, or None otherwise
+		'''
+		return
+
+	@abc.abstractmethod
+	def observe_suggestion(self, suggestion, did_respond):
+		'''
+		used for observation
+		observe a suggestion, and see the response
+		suggestion - of type SUGGESTION
+		did_respond - boolean to see if the responder sent a card back or not
+		'''
+		return
+
+	@abc.abstractmethod
+	def update_from_response(self, suggestion, response):
+		'''
+		after making a suggestion, this method will be called to respond to a response
+
+		'''
+		return
+
+	@abc.abstractmethod
+	def observe_accusation(self, accuser_name, was_correct):
+		'''
+		made to respond to an accusation
+		was_accuser is true if the accusation was made by self, False otherwise
+		was_correct is true if the accusation was correct (and the game ends)
+		'''
+		return

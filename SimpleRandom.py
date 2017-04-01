@@ -8,22 +8,30 @@ class SimpleRandom(Agent):
 		suggestion is of type Suggestion
 		accusation is a dict where key is the type, and the value is the card
 		'''
-		weapon_dom = self.caseFileWeapon.cur_dom()
-		room_dom = self.caseFileRoom.cur_dom()
-		suspect_dom = self.caseFileRoom.cur_dom()
+		weapon_dom = self.caseFileWeapon.cur_domain()
+		room_dom = self.caseFileRoom.cur_domain()
+		suspect_dom = self.caseFileSuspect.cur_domain()
 
 		np.random.shuffle(weapon_dom)
 		np.random.shuffle(room_dom)
 		np.random.shuffle(suspect_dom)
 
-		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
+		if (len(weapon_dom) == 1 and len(room_dom) == 1 and len(suspect_dom) == 1):
+			room_value = self.caseFileRoom.cur_domain()[0]
+			weapon_value = self.caseFileWeapon.cur_domain()[0]
+			suspect_value = self.caseFileSuspect.cur_domain()[0]
+
+			self.caseFileRoom.assign(room_value)
+			self.caseFileWeapon.assign(weapon_value)
+			self.caseFileSuspect.assign(suspect_value)
+
 			accusation = {}
 			accusation['Room'] = self.caseFileRoom
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
 			return accusation
 		else:
-			suggestion = Suggestion(self.name, self.firstPlayerName, weapon_dom[0], room_dom[0], suspect_dom[0])
+			suggestion = Suggestion(self.name, self.firstOppName, weapon_dom[0], room_dom[0], suspect_dom[0])
 			return suggestion
 
 	def respond_to_suggestion(self, suggestion):
@@ -35,8 +43,8 @@ class SimpleRandom(Agent):
 		give a response of a card if you have a card in suggestion, or None otherwise
 		'''
 
-		for card in self.Hand:
-			if card.assingedValue == suggestion.weapon:
+		for card in self.hand.get_cards():
+			if card.assignedValue == suggestion.weapon:
 				return card
 			elif card.assignedValue == suggestion.room:
 				return card
@@ -75,5 +83,3 @@ class SimpleRandom(Agent):
 		'''
 		return
 
-if __name__ == '__main__':
-	agent = SimpleRandom('Player1')

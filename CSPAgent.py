@@ -62,8 +62,28 @@ class CSPAgent(Agent):
 		suggestion - of type SUGGESTION
 		did_respond - boolean to see if the responder sent a card back or not
 
-		CSPAgent: 
+		CSPAgent: Add constraints based on interactions between first op and second op
 		'''
+		#Add constraints to one card
+		if did_respond:
+			suggestion_constraint = Constraint(suggestion.weapon+'x'
+				+suggestion.room+'x'+suggestion.suspect, scope=self.first_opponent_hand.get_cards())
+			
+		#If opponent did not respond, they do not have the suggested
+		#Weapon, room or suspect. Prune these from their cards.
+		else:
+			if suggestion.responder == self.firstOppName:
+				for card in first_opponent_hand.get_cards():
+					if card.assignedValue == None:
+						card.prune_value(suggestion.weapon)
+						card.prune_value(suggestion.room)
+						card.prune_value(suggestion.suspect)
+			else:
+				for card in second_opponent_hand.get_cards():
+					if card.assignedValue == None:
+						card.prune_value(suggestion.weapon)
+						card.prune_value(suggestion.room)
+						card.prune_value(suggestion.suspect)
 		return
 
 	def update_from_response(self, suggestion, response):

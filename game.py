@@ -18,11 +18,6 @@ CSP based: able to make a guessed accusation by noticing that other players have
 Information Theory Based: able to ask the least amount of questions necessary to attain the goal.
 
 '''
-
-ROOMS = ['Conservatory', 'Hall', 'Lounge', 'Dining Room', 'Kitchen', 'Ballroom', 'Billiard Room', 'Library', 'Study']
-WEAPONS = ['Candlestick', 'Revolver', 'Wrench', 'Rope', 'Lead Pipe', 'Knife']
-SUSPECTS = ['Miss Scarlett', 'Mrs White', 'Mr Green', 'Mrs Peacock', 'Colonel Mustard', 'Professor Plum']
-
 class Game(object):
 	'''
 	self.rooms - list of room card variables (except for room card in case file)
@@ -127,6 +122,7 @@ class Game(object):
 		player_order_dict = {}
 		for i in range(len(self.agents)):
 			player_order_dict[i] = self.agents[i].name
+			print("player {}'s cards: {}".format(i, self.agents[i].hand.get_cards()))
 
 		for agent in self.agents:
 			agent.init_player_orders(player_order_dict)
@@ -138,29 +134,33 @@ class Game(object):
 		- tell next player it's their turn
 		- returns the player who won's name, and the number of turns it took
 		'''
+		print("Game Starting!")
+		print("Case file cards: {}".format(self.case_file_cards()))
+
 		isNotEliminated = [True]*len(self.agents)
 		finished = False
 		i = 0
+		turn_num = 0
 
 		while not finished:
 			if not any(isNotEliminated):
 				# noone can make a move
 				print("All Players Eliminated!")
-				return None, i
+				return None, turn_num
 
-			if not isNotEliminated[i]:
+			elif isNotEliminated[i]:
 				# person can make a move
 				suggester = self.agents[i]
 				responder = self.agents[(i + 1) % 3]
 				observer = self.agents[(i + 2) % 3]
-				print("ROUND {}: {}'s TURN TO MOVE".format(i, suggester.name))
+				print("ROUND {}: {}'s TURN TO MOVE".format(turn_num, suggester.name))
 
 				move = suggester.make_move()
 
 				if isinstance(move, Suggestion):
 					# suggester made a suggestion
 
-					self._print_suggestion(suggester.name, suggestion)
+					self._print_suggestion(suggester.name, move)
 
 					card_exchanged = self._made_suggestion(move, suggester, responder, observer)
 
@@ -183,8 +183,9 @@ class Game(object):
 						isNotEliminated[i] = False
 
 				i = (i + 1) % 3
+				turn_num += 1
 
-		return suggester.name, i
+		return suggester.name, turn_num
 
 	def _check_accusation(self, accusation):
 		'''
@@ -193,11 +194,11 @@ class Game(object):
 
 		accusation is a dict: keys are: <"Room", "Suspect", "Weapon">
 		'''
-		if accusation["Room"].getName() != self.caseFileRoom.getName():
+		if accusation["Room"].get_assigned_value() != self.caseFileRoom.get_assigned_value():
 			return False
-		if accusation["Suspect"].getName() != self.caseFileSuspect.getName():
+		if accusation["Suspect"].get_assigned_value() != self.caseFileSuspect.get_assigned_value():
 			return False
-		if accusation["Weapon"].getName() != self.caseFileWeapon.getName():
+		if accusation["Weapon"].get_assigned_value() != self.caseFileWeapon.get_assigned_value():
 			return False
 		return True
 
@@ -206,10 +207,10 @@ class Game(object):
 		suggester.update_from_response(move, response)
 
 		card_exchanged = response is not None
-		observer.update_from_response(move, card_exchanged)
+		observer.observe_suggestion(move, card_exchanged)
 
 		if card_exchanged:
-			print("{} showed {} to {}".format(responder.name, response.getName(), suggester.name))
+			print("{} showed {} to {}".format(responder.name, response.get_assigned_value(), suggester.name))
 		else:
 			print("{} didn't have any of those cards".format(responder.name))
 
@@ -222,177 +223,6 @@ class Game(object):
 		cards = suggestion.get_cards()
 		print("suggester suggests: {}".format(cards))
 
-class Hand(object):
-	'''
-	6 cards
-	'''
-	def __init__(self):
-		'''
-		Initialize 6 empty card objects into hand
-		'''
-		self.cards = [Card('Room', 'needtochangethis', WEAPONS+ROOMS+SUSPECTS)]*6
-
-	def add_card(self, card):
-		'''
-		Initialize an empty card as card if empty cards exist
-
-		NOTE: MIGHT NEED TO MAKE THIS MORE SPECIFIC TO ENSURE TO TARGETS
-		THE RIGHT CARD, for now:
-		'''
-		for i, c in enumerate(self.cards):
-			if c.get_assigned_value() == None:
-				c = card
-				self.cards[i] = card
-				break
-
-	def isInHand(self, name):
-		'''
-		Returns true if a card in the hand is assigned name
-		'''
-		for c in self.cards:
-			if c.name == name:
-				return True
-		return False
-
-	def get_cards(self):
-		return (list(self.cards))
-
-	def pruneHand(self, opponent_hand):
-		'''
-		Prunes opponent_hand of card values in self.hand 
-		'''
-		for my_card in self.hand:
-			for op_card in opponent_hand:
-				op_card.prune_vale(my_card.assignedValue)
-		return opponent_hand
-
-class Suggestion(object):
-
-	def __init__(self, suggester, responder, weapon, room, suspect):
-		self.suggester = suggester
-		self.responder = responder
-		self.weapon = weapon
-		self.room = room
-		self.suspect = suspect
-
-	def get_cards(self):
-		return [self.room, self.weapon, self.suspect]
-
-class Agent(metaclass=abc.ABCMeta):
-	'''
-	Hand
-
-	create blank instance of Hand for each other player
-
-	instance of csp or something
-	gabes a bitch
-	'''
-	def __init__(self, name):
-		'''
-		init hand and shit
-		opponents
-
-		- DONE Initialize their own hand (given from game class)
-		- Initialize ghost hands for 2 oponents (csp*2)
-		- DONE Initialize ghost cards for case file (csp)
-		'''
-		self.name = name
-
-		self.caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
-		self.caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
-		self.caseFileRoom = Card(typ="Room", domain=ROOMS)
-
-		self.CSP = CSP(name, [self.caseFileRoom, self.caseFileSuspect, self.caseFileWeapon])
-		roomConstraint = Constraint('Room', scope=[self.caseFileRoom])
-		suspectConstraint = Constraint('Suspect', scope=[self.caseFileSuspect])
-		weaponConstraint = Constraint('Weapon', scope=[self.caseFileWeapon])
-
-		roomSatisfyingTuples = [[x] for x in ROOMS]
-		suspectSatisfyingTuples = [[x] for x in SUSPECTS]
-		weaponSatisfyingTuples = [[x] for x in WEAPONS]
-
-		roomConstraint.add_satisfying_tuples(roomSatisfyingTuples)
-		suspectConstraint.add_satisfying_tuples(suspectSatisfyingTuples)
-		weaponConstraint.add_satisfying_tuples(weaponSatisfyingTuples)
-
-		self.CSP.add_constraint(roomConstraint)
-		self.CSP.add_constraint(suspectConstraint)
-		self.CSP.add_constraint(weaponConstraint)
-		
-	def init_player_orders(self, order_dict):
-		'''
-		order_dict is a dictionary that maps player numbers to their names
-		'''
-
-		for key in order_dict:
-			if order_dict[key] == self.name:
-				self.playerNum = key
-				break
-
-		self.firstOppName = order_dict[(self.playerNum + 1) % 3]
-		self.secondOppName = order_dict[(self.playerNum + 2) % 3]
-
-
-	def give_hand(self, hand):
-		'''
-		Initalize hand
-		Prune cards in hand from the casefile domain
-		'''
-		self.hand = hand
-		for card in self.hand.get_cards():
-			if card.typ == 'Weapon':
-				self.caseFileWeapon.prune_value(card.assignedValue)
-			elif card.typ == 'Room':
-				self.caseFileRoom.prune_value(card.assignedValue)
-			else:
-				self.caseFileSuspect.prune_value(card.assignedValue)	
-
-	@abc.abstractmethod
-	def make_move(self):
-		'''
-		decide when to make a suggestion or accusation
-		suggestion is of type Suggestion
-		accusation is a dict where key is the type, and the value is the card
-		'''
-		return
-
-	@abc.abstractmethod
-	def respond_to_suggestion(self, suggestion):
-		'''
-		update knowledge base with whatever from game
-
-		Update CSPs
-
-		give a response of a card if you have a card in suggestion, or None otherwise
-		'''
-		return
-
-	@abc.abstractmethod
-	def observe_suggestion(self, suggestion, did_respond):
-		'''
-		used for observation
-		observe a suggestion, and see the response
-		suggestion - of type SUGGESTION
-		did_respond - boolean to see if the responder sent a card back or not
-		'''
-		return
-
-	@abc.abstractmethod
-	def update_from_response(self, suggestion, response):
-		'''
-		after making a suggestion, this method will be called to respond to a response
-
-		'''
-		return
-
-	@abc.abstractmethod
-	def observe_accusation(self, accuser_name, was_correct):
-		'''
-		made to respond to an accusation
-		was_accuser is true if the accusation was made by self, False otherwise
-		was_correct is true if the accusation was correct (and the game ends)
-		'''
-		return
 
 if __name__ == '__main__':
 	game = Game()
