@@ -133,7 +133,6 @@ class Game(object):
 		self.agents = np.shuffle(np.array([agent1, agent2, agent3]))
 
 	def play_game(self):
->>>>>>> 64d7a84acf49ebd2e3993745cbf80c827227020f
 		'''
 		- keeping track of who's turn is it
 		- is game still going/did someone win?
@@ -318,7 +317,6 @@ class Card(object):
 		    print("ERROR: trying to unassign variable", self, " not yet assigned")
 		    return
 		self.assignedName = None
->>>>>>> 64d7a84acf49ebd2e3993745cbf80c827227020f
 
 class Hand(object):
 	'''
