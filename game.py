@@ -230,7 +230,7 @@ class Hand(object):
 		'''
 		Initialize 6 empty card objects into hand
 		'''
-		self.cards = [Card('Room', domain=WEAPONS+ROOMS+SUSPECTS)]*6
+		self.cards = [Card('Room', 'needtochangethis', WEAPONS+ROOMS+SUSPECTS)]*6
 
 	def add_card(self, card):
 		'''
@@ -256,6 +256,15 @@ class Hand(object):
 
 	def get_cards(self):
 		return (list(self.cards))
+
+	def pruneHand(self, opponent_hand):
+		'''
+		Prunes opponent_hand of card values in self.hand 
+		'''
+		for my_card in self.hand:
+			for op_card in opponent_hand:
+				op_card.prune_vale(my_card.assignedValue)
+		return opponent_hand
 
 class Suggestion(object):
 

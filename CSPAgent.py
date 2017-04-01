@@ -1,6 +1,19 @@
 from game import *
 
-class SimpleAgent(Agent):
+	'''
+	CSPAgent focuses on 'observe_suggestion()' function.
+	- It observes the exchange as first opponent is the suggester
+	'''
+
+class CSPAgent(Agent):
+	def __init__(self, name):
+		super(Agent, self).__init__(name)
+
+		self.first_opponent_hand = pruneHand(Hand())
+		self.second_opponent_hand = pruneHand(Hand())
+
+		self.CSP_first_opponent = CSP(self.firstOppName, self.first_opponent_hand.getCards())
+		self.CSP_second_opponent = CSP(self.secondOppName, self.second_opponent_hand.getCards())
 
 	def make_move(self):
 		'''
@@ -10,9 +23,9 @@ class SimpleAgent(Agent):
 		'''
 		weapon_dom = np.shuffle(self.caseFileWeapon.cur_dom())
 		room_dom = np.shuffle(self.caseFileRoom.cur_dom())
-		suspect_dom = np.shuffle(self.caseFileRoom.cur_dom())
+		suspect_dom = np.shuffle(self.caseFileSuspect.cur_dom())
 
-		if (weapon_dom.cur_domain_size() == 1 and room_dom.cur_domain_size() == 1 and suspect_dom.cur_domain_size() == 1):
+		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
 			accusation = {}
 			accusation['Room'] = self.caseFileRoom
 			accusation['Weapon'] = self.caseFileWeapon
@@ -29,14 +42,16 @@ class SimpleAgent(Agent):
 		Update CSPs
 
 		give a response of a card if you have a card in suggestion, or None otherwise
+
+		CSPAgent: Return room last (becomes more rooms - harder to figure out)
 		'''
 
 		for card in self.Hand:
-			if card.assingedValue == suggestion.weapon:
-				return card
-			else if card.assignedValue == suggestion.room:
+			if card.assignedValue == suggestion.weapon:
 				return card
 			else if card.assignedValue == suggestion.suspect:
+				return card
+			else if card.assignedValue == suggestion.room:
 				return card
 		return None
 
@@ -46,6 +61,8 @@ class SimpleAgent(Agent):
 		observe a suggestion, and see the response
 		suggestion - of type SUGGESTION
 		did_respond - boolean to see if the responder sent a card back or not
+
+		CSPAgent: 
 		'''
 		return
 
@@ -66,10 +83,11 @@ class SimpleAgent(Agent):
 	def observe_accusation(self, was_accuser, was_correct):
 		'''
 		made to respond to an accusation
-		was_accuser is true if the accusation was made by self, False otherwise
+		accuser_name is name of accuser
 		was_correct is true if the accusation was correct (and the game ends)
 		'''
 		return
+
 
 if __name__ == '__main__':
 	agent = CSPAgent('player1')

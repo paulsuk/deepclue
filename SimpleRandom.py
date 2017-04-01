@@ -16,7 +16,7 @@ class SimpleRandom(Agent):
 		np.random.shuffle(room_dom)
 		np.random.shuffle(suspect_dom)
 
-		if (weapon_dom.cur_domain_size() == 1 and room_dom.cur_domain_size() == 1 and suspect_dom.cur_domain_size() == 1):
+		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
 			accusation = {}
 			accusation['Room'] = self.caseFileRoom
 			accusation['Weapon'] = self.caseFileWeapon
@@ -76,4 +76,4 @@ class SimpleRandom(Agent):
 		return
 
 if __name__ == '__main__':
-	agent = SimpleAgent('Player1')
+	agent = SimpleRandom('Player1')
