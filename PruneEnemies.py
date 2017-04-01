@@ -8,20 +8,20 @@ class PruneEnemiesAgent(Agent):
     def __init__(self, name):
         super(Agent, self).__init__(name)
 
-        
-
         # Initialize CSPs for other Agents
-        # Begin by initializing the opposing agent's possible cards
-        p1cards = [Card(typ = None, domain=WEAPONS + ROOMS + SUSPECTS)]*6
-        p2cards = [Card(typ = None, domain=WEAPONS + ROOMS + SUSPECTS)]*6
+        # Begin by initializing the opposing agent's possible cards (and removing my cards)
+        domain = WEAPONS + ROOMS + SUSPECTS - self.cards
+        p1cards = [Card(typ = None, domain=domain)]*6
+        p2cards = [Card(typ = None, domain=domain)]*6
 
         # Create the constraints for the player cards
         p1constraint = Constraint(name = 'p1_constraint', p1cards)
         p2constraint = Constraint(name = 'p2_constraint', p2cards)
 
-        #
-        sat_tuples = itertools.permutations(WEAPONS + ROOMS + SUSPECTS, 6)
-        p1constraint.add_satisfying_tuples()
+        #Add the satisfying tuples to the constraint
+        sat_tuples = list(itertools.permutations(domain, 6))
+        p1constraint.add_satisfying_tuples(sat_tuples)
+        p2constraint.add_satisfying_tuples(sat_tuples)
 
 	def make_move(self):
 		'''
@@ -55,12 +55,12 @@ class PruneEnemiesAgent(Agent):
 		give a response of a card if you have a card in suggestion, or None otherwise
 		'''
 
-		for card in self.Hand:
-			if card.assignedValue == suggestion.weapon:
+		for card in self.hand:
+			if card.get_assigned_value() == suggestion.weapon:
 				return card
-			else if card.assignedValue == suggestion.room:
+			else if card.get_assigned_value() == suggestion.room:
 				return card
-			else if card.assignedValue == suggestion.suspect:
+			else if card.get_assigned_value() == suggestion.suspect:
 				return card
 		return None
 
@@ -75,19 +75,41 @@ class PruneEnemiesAgent(Agent):
         # ASSUMPTION: The suggester does not possess the cards that he suggested
         # Prune suggested cards from suggester, assume player1 is suggester
 
-        if suggestion.suggester is p1:
+        if suggestion.suggester == self.firstOppName:
             for card in p1cards:
                 card.prune_value(suggestion.weapon)
                 card.prune_value(suggestion.room)
                 card.prune_value(suggestion.suspect)
-        elif suggestion.suggester is p2:
+        elif suggestion.suggester == self.secondOppName:
             for card in p2cards:
                 card.prune_value(suggestion.weapon)
                 card.prune_value(suggestion.room)
                 card.prune_value(suggestion.suspect)
 
-        # Now, if all enemy player cards are known, can prune from the casefile
+        # If all enemy player cards are known, can prune from the casefile
+        # Since all cards are pruned at once every time an information is received, only have to check one card
+        if p1cards[0].cur_domain_size() == 1 and p2cards[0].cur_domain_size() == 1:
+            for card_list in [p1cards, p2cards]:
+                for card in card_list:
+                    card.assign(card.cur_domain()[0])
+                    if card.cur_domain[0] in ROOMS:
+                        self.caseFileRoom.prune_value(card.get_assigned_value())
+                    elif card.cur_domain[0] in WEAPONS:
+                        self.caseFileWeapon.prune_value(card.get_assigned_value())
+                    elif card.cur_domain[0] in SUSPECTS:
+                        self.caseFileSuspect.prune_value(card.get_assigned_value())
 
+            # Also prune the values that I hold in my hand
+            for card in self.hand.cards:
+                    card.assign(card.cur_domain()[0])
+                    if card.cur_domain()[0] in ROOMS:
+                        self.caseFileRoom.prune_value(card.get_assigned_value())
+                    elif card.cur_domain()[0] in WEAPONS:
+                        self.caseFileWeapon.prune_value(card.get_assigned_value())
+                    elif card.cur_domain()[0] in SUSPECTS:
+                        self.caseFileSuspect.prune_value(card.get_assigned_value())
+
+            # Case file domain sizes should now be 1.
 
 		return
 
@@ -99,7 +121,7 @@ class PruneEnemiesAgent(Agent):
 		if response is not None:
 			if response.typ == 'Weapon':
 				self.caseFileWeapon.prune_value(response.assignedValue)
-			else if response.typ == 'Room':
+			elif response.typ == 'Room':
 				self.caseFileRoom.prune_value(response.assignedValue)
 			else:
 				self.caseFileSuspect.prune_value(response.assignedValue)
@@ -114,4 +136,4 @@ class PruneEnemiesAgent(Agent):
 		return
 
 if __name__ == '__main__':
-	agent = SimpleAgent('Player1')
+	agent = PruneEnemiesAgent('Player1')
