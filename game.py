@@ -114,7 +114,7 @@ class Game(object):
 
 		return hand1, hand2, hand3
 
-	def add_players(self, agent1, agent2, agent3):
+	def init_players(self, agent1, agent2, agent3):
 		'''
 		Adds 3 agents, initializes them and gives them cards
 
@@ -126,6 +126,13 @@ class Game(object):
 		agent3.give_hand(hand3)
 
 		self.agents = np.shuffle(np.array([agent1, agent2, agent3]))
+
+		player_order_dict = {}
+		for i in range(len(self.agents)):
+			player_order_dict[i] = self.agents[i].name
+
+		for agent in self.agents:
+			agent.init_player_orders(player_order_dict)
 
 	def play_game(self):
 		'''
@@ -166,7 +173,7 @@ class Game(object):
 					observer.observe_accusation(False, was_correct)
 
 					if was_correct:
-						return suggestor
+						finished = True
 					else:
 						isNotEliminated[i] = False
 
@@ -174,7 +181,7 @@ class Game(object):
 				# noone can make a move
 				return
 			i = (i + 1) % 3
-		return
+		return suggestor
 
 	def _check_accusation(self, accusation):
 		'''
@@ -292,6 +299,19 @@ class Agent(metaclass=abc.ABCMeta):
 		self.CSP.add_constraint(suspectConstraint)
 		self.CSP.add_constraint(weaponConstraint)
 
+	def init_player_orders(self, order_dict):
+		'''
+		order_dict is a dictionary that maps player numbers to their names
+		'''
+
+		for key in order_dict:
+			if order_dict[key] == self.name:
+				self.playerNum = key
+				break
+
+		self.firstOppName = order_dict[(self.playerNum + 1) % 3]
+		self.secondOppName = order_dict[(self.playerNum + 2) % 3]
+
 	def give_hand(self, hand):
 		'''
 		Initalize hand
@@ -356,3 +376,6 @@ class Agent(metaclass=abc.ABCMeta):
 
 if __name__ == '__main__':
 	game = Game()
+	agent1 = Agent()
+	game.init_players()
+	game.play

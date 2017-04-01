@@ -1,5 +1,11 @@
 from game import *
-
+	'''
+	SimpleAgent:
+	- Makes random guess from current domain of the casefile cards
+	- Makes accusation only when 100 percent certain
+	- Does not consider oponents guesses/responses
+	- Prunes based on answers as the suggestor and response from the responder
+	'''
 class SimpleAgent(Agent):
 
 	def make_move(self):
@@ -10,16 +16,16 @@ class SimpleAgent(Agent):
 		'''
 		weapon_dom = np.shuffle(self.caseFileWeapon.cur_dom())
 		room_dom = np.shuffle(self.caseFileRoom.cur_dom())
-		suspect_dom = np.shuffle(self.caseFileRoom.cur_dom())
+		suspect_dom = np.shuffle(self.caseFileSuspect.cur_dom())
 
-		if (weapon_dom.cur_domain_size() == 1 and room_dom.cur_domain_size() == 1 and suspect_dom.cur_domain_size() == 1):
+		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
 			accusation = {}
 			accusation['Room'] = self.caseFileRoom
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
 			return accusation
 		else:
-			suggestion = Suggestion(self.name, self.firstPlayerName, weapon_dom[0], room_dom[0], suspect_dom[0])
+			suggestion = Suggestion(self.name, weapon_dom[0], room_dom[0], suspect_dom[0])
 			return suggestion
 
 	def respond_to_suggestion(self, suggestion):
@@ -32,7 +38,7 @@ class SimpleAgent(Agent):
 		'''
 
 		for card in self.Hand:
-			if card.assingedValue == suggestion.weapon:
+			if card.assignedValue == suggestion.weapon:
 				return card
 			else if card.assignedValue == suggestion.room:
 				return card
@@ -66,7 +72,7 @@ class SimpleAgent(Agent):
 	def observe_accusation(self, was_accuser, was_correct):
 		'''
 		made to respond to an accusation
-		was_accuser is true if the accusation was made by self, False otherwise
+		accuser_name is name of accuser
 		was_correct is true if the accusation was correct (and the game ends)
 		'''
 		return
