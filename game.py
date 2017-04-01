@@ -294,9 +294,17 @@ class Agent(metaclass=abc.ABCMeta):
 		
 	def give_hand(self, hand):
 		'''
-		Ayo hand
+		Initalize hand
+		Prune cards in hand from the casefile domain
 		'''
 		self.hand = hand
+		for card in self.hand:
+			if card.typ == 'Weapon':
+				self.caseFileWeapon.prune_value(card.assignedValue)
+			else if card.typ == 'Room':
+				self.caseFileRoom.prune_value(card.assignedValue)
+			else:
+				self.caseFileSuspect.prune_value(card.assignedValue)	
 
 	@abc.abstractmethod
 	def make_move(self):
@@ -308,7 +316,7 @@ class Agent(metaclass=abc.ABCMeta):
 		return
 
 	@abc.abstractmethod
-	def respond_to_suggestion(self, move):
+	def respond_to_suggestion(self, suggestion):
 		'''
 		update knowledge base with whatever from game
 
