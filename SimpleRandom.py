@@ -19,7 +19,7 @@ class SimpleAgent(Agent):
 			accusation['Suspect'] = self.caseFileSuspect
 			return accusation
 		else:
-			suggestion = Suggestion(self.name, weapon_dom[0], room_dom[0], suspect_dom[0])
+			suggestion = Suggestion(self.name, self.firstPlayerName, weapon_dom[0], room_dom[0], suspect_dom[0])
 			return suggestion
 
 	def respond_to_suggestion(self, suggestion):
