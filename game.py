@@ -173,7 +173,7 @@ class Game(object):
 					observer.observe_accusation(False, was_correct)
 
 					if was_correct:
-						return suggestor
+						finished = True
 					else:
 						isNotEliminated[i] = False
 
@@ -181,7 +181,7 @@ class Game(object):
 				# noone can make a move
 				return
 			i = (i + 1) % 3
-		return
+		return suggestor
 
 	def _check_accusation(self, accusation):
 		'''
