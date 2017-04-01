@@ -3,6 +3,7 @@ import abc
 import time
 import functools
 import numpy as np
+from PruneEnemies import *
 from SimpleRandom import *
 import pdb
 
@@ -227,7 +228,7 @@ if __name__ == '__main__':
 	game = Game()
 	p1 = SimpleRandom('paul')
 	p2 = SimpleRandom('grace')
-	p3 = SimpleRandom('gabe')
+	p3 = PruneEnemiesAgent('gabe')
 	game.init_players(p1, p2, p3)
 
 	name, i = game.play_game()
