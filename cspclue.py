@@ -93,7 +93,7 @@ class Card:
 		self.assignedValue = name
 
 	def update_type(self):
-		if self.assignedValue != None and card.typ == None:
+		if self.assignedValue != None and self.typ == None:
 			if self.assignedValue in WEAPONS:
 				self.typ = 'Weapon'
 			elif self.assignedValue in ROOMS:
@@ -571,7 +571,7 @@ class Hand(object):
 		'''
 		Initialize 6 empty card objects into hand
 		'''
-		self.cards = [Card('Room', domain=WEAPONS+ROOMS+SUSPECTS)]*6
+		self.cards = [Card(None, domain=WEAPONS+ROOMS+SUSPECTS)]*6
 
 	def add_card(self, card):
 		'''
@@ -598,14 +598,13 @@ class Hand(object):
 	def get_cards(self):
 		return (list(self.cards))
 
-	def pruneHand(self, opponent_hand):
+	def pruneHand(self, know_hand):
 		'''
 		Prunes opponent_hand of card values in self.hand 
 		'''
-		for my_card in self.cards:
-		  for op_card in opponent_hand.hand:
-		    op_card.prune_vale(my_card.assignedValue)
-		return opponent_hand
+		for op_card in self.cards:
+		  for card in know_hand.get_cards():
+		    op_card.prune_value(card.assignedValue)
 
 	def get_assigned_card_values(self):
 		'''
