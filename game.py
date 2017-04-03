@@ -144,6 +144,8 @@ class Game(object):
 		turn_num = 0
 
 		while not finished:
+			#print("in the while not finished")
+			#print(isNotEliminated)
 			if not any(isNotEliminated):
 				# noone can make a move
 				print("All Players Eliminated!")
@@ -244,9 +246,7 @@ if __name__ == '__main__':
 	name, i = game.play_game()
 	print("{} won after {} turns".format(name, i))
 
-	game.reset()
-
-	name, i = game.play_game()
-	print("{} won after {} turns".format(name, i))
-
-
+	# game.reset()
+	#
+	# name, i = game.play_game()
+	# print("{} won after {} turns".format(name, i))

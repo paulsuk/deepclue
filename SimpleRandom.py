@@ -72,7 +72,7 @@ class SimpleRandom(Agent):
 			elif response.typ == 'Room':
 				self.caseFileRoom.prune_value(response.assignedValue)
 			else:
-				self.caseFileSuspect.prune_value(response.assignedValue)	
+				self.caseFileSuspect.prune_value(response.assignedValue)
 		return
 
 	def observe_accusation(self, accuser_name, was_correct):
