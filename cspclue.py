@@ -600,11 +600,11 @@ class Hand(object):
 
 	def pruneHand(self, know_hand):
 		'''
-		Prunes opponent_hand of card values in self.hand 
+		Prunes opponent_hand of card values in self.hand
 		'''
 		for op_card in self.cards:
 		  for card in know_hand.get_cards():
-		    op_card.prune_value(card.assignedValue)
+		   op_card.prune_value(card.assignedValue)
 
 	def get_assigned_card_values(self):
 		'''
@@ -699,6 +699,7 @@ class Agent(metaclass=abc.ABCMeta):
 			else:
 				self.caseFileSuspect.prune_value(card.assignedValue)
 
+	@abc.abstractmethod
 	def reset(self):
 		self._init_csp()
 

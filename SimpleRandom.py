@@ -83,5 +83,5 @@ class SimpleRandom(Agent):
 		'''
 		return
 
-
-
+	def reset(self):
+		super().reset()

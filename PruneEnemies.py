@@ -161,6 +161,7 @@ class PruneEnemiesAgent(Agent):
 	def reset(self):
 		''' Resets all the init values so that the game can be re-run '''
 
+		super().reset()
 		self.pruned_hand_from_casefile = False
 
 		# Initialize CSPs for other Agents
