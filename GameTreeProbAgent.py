@@ -1,11 +1,15 @@
 from game import *
 	
-	#ProbAgent has the same logic
+	#GameTreeProbAgent has the same logic
 	#Same as CSPAgent except for make_move()
 	#If probability of guessing a type is < 50% - remove
 	#sets' values from that type's current domain since
 	#there is atleast a 50 or 33 percent chance that a player
 	#has one of the cards 
+
+	#ALSO - Shows card that will yield lowest probability in response to
+	#a suggestion
+	#ALSO - Guess if think opponent will guess on next turn
 	
 class GameTreeProbAgent(Agent):
 	def __init__(self, name):
@@ -238,7 +242,7 @@ class GameTreeProbAgent(Agent):
 		else:
 			if suggestion.responder == self.firstOppName:
 				self._prune_sug(suggestion, self.first_opponent_hand, self.first_opponent_sets)
-				
+
 
 	def update_from_response(self, suggestion, response):
 		'''

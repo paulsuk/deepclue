@@ -239,7 +239,7 @@ class Game(object):
 
 if __name__ == '__main__':
 	game = Game()
-	p1 = SimpleRandom('paul')
+	p1 = CSPAgent('paul')
 	p2 = GameTreeProbAgent('grace')
 	p3 = SimpleRandom('gabe')
 	game.init_players(p1, p2, p3)
