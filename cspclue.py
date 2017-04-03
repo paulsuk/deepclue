@@ -620,12 +620,14 @@ class Agent(metaclass=abc.ABCMeta):
 		- DONE Initialize ghost cards for case file (csp)
 		'''
 		self.name = name
+		self._init_csp()
 
+	def _init_csp(self):
 		self.caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
 		self.caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
 		self.caseFileRoom = Card(typ="Room", domain=ROOMS)
 
-		self.CSP = CSP(name, [self.caseFileRoom, self.caseFileSuspect, self.caseFileWeapon])
+		self.CSP = CSP(self.name, [self.caseFileRoom, self.caseFileSuspect, self.caseFileWeapon])
 		roomConstraint = Constraint('Room', scope=[self.caseFileRoom])
 		suspectConstraint = Constraint('Suspect', scope=[self.caseFileSuspect])
 		weaponConstraint = Constraint('Weapon', scope=[self.caseFileWeapon])
@@ -668,6 +670,9 @@ class Agent(metaclass=abc.ABCMeta):
 				self.caseFileRoom.prune_value(card.assignedValue)
 			else:
 				self.caseFileSuspect.prune_value(card.assignedValue)
+
+	def reset(self):
+		self._init_csp()
 
 	@abc.abstractmethod
 	def make_move(self):
