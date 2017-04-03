@@ -1,20 +1,20 @@
 from game import *
 	
-	#CSPAgent focuses on 'observe_suggestion()' function.
-	#- It observes the exchange as first opponent is the suggester
+	#ProbAgent has the same logic
+	#Same as CSPAgent except for make_move()
+	#If probability of guessing a type is < 50% - remove
+	#sets' values from that type's current domain since
+	#there is atleast a 50 or 33 percent chance that a player
+	#has one of the cards 
 	
 
-class CSPAgent(Agent):
+class ProbAgent(Agent):
 	def __init__(self, name):
 		super().__init__(name)
 
 		#Make opponent hands
 		self.first_opponent_hand = Hand()
 		self.second_opponent_hand = Hand()
-
-		print("START")
-		print("cards: {}".format(self.first_opponent_hand.get_cards()))
-		print("cards: {}".format(self.second_opponent_hand.get_cards()))
 
 		#Sets to keep track of potential domains for each hand
 		self.first_opponent_sets = []
@@ -65,13 +65,17 @@ class CSPAgent(Agent):
 		self._update_case(self.first_opponent_hand)
 		self._update_case(self.second_opponent_hand)
 
-		#print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
-		#print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
+		print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
+		print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
 
-		#print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
-		#print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
+		print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
 
-		#print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
+		prob = self._find_probability()
+
+		print("PROBABILITY of correctly guessing based on hands: {}%".format(prob))
+		print("PROBABILITY of correctly guessing weapon: {}%".format(self._find_probability_weapon()))
+		print("PROBABILITY of correctly guessing suspect: {}%".format(self._find_probability_suspect()))
+		print("PROBABILITY of correctly guessing room: {}%".format(self._find_probability_room()))
 
 		#Make accusation
 		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
@@ -91,17 +95,67 @@ class CSPAgent(Agent):
 		
 		#Make suggestion - keep as close to prev suggestion as possible
 		else:
-			if self.past_suggestion[0] not in weapon_dom:
+			if self._find_probability_weapon() < 50:
+				new_dom = self._smaller_dom(weapon_dom, WEAPONS)
+				np.random.shuffle(new_dom)
+				self.past_suggestion[0] = weapon_dom[0]
+				print("Guess Weapon from: {}".format(new_dom))
+			else:
 				np.random.shuffle(weapon_dom)
 				self.past_suggestion[0] = weapon_dom[0]
-			if self.past_suggestion[1] not in room_dom:
+
+			if self._find_probability_room() < 50:
+				new_dom = self._smaller_dom(room_dom, ROOMS)
+				np.random.shuffle(new_dom)
+				self.past_suggestion[1] = room_dom[0]
+				print("Guess Room from: {}".format(new_dom))
+			else:
 				np.random.shuffle(room_dom)
 				self.past_suggestion[1] = room_dom[0]
-			if self.past_suggestion[2] not in suspect_dom:
+
+			if self._find_probability_suspect() < 50:
+				new_dom = self._smaller_dom(suspect_dom, SUSPECTS)
+				np.random.shuffle(new_dom)
+				self.past_suggestion[2] = suspect_dom[0]
+				print("Guess Suspect from: {}".format(new_dom))
+			else:
 				np.random.shuffle(suspect_dom)
 				self.past_suggestion[2] = suspect_dom[0]
+
 			suggestion = Suggestion(self.name, self.firstOppName, self.past_suggestion[0], self.past_suggestion[1], self.past_suggestion[2])
 			return suggestion
+
+	def _smaller_dom(self, cur_dom, typ):
+		'''
+		Return new current domain where the elements from the domain
+		are removed
+		'''
+		#Remove empty lists from sets
+		set1 = [x for x in self.first_opponent_sets if x]
+		self.first_opponent_sets = set1
+		set2 = [x for x in self.second_opponent_sets if x]
+		self.second_opponent_sets = set2
+		
+		dom1 = []
+		dom2 = []
+
+		for domain in self.first_opponent_sets:
+			for card in domain:
+				if card in typ:
+					dom1.append(card)
+		print('CUR DOM1: {}'.format(dom1))
+		for domain in self.second_opponent_sets:
+			for card in domain:
+				if card in typ:
+					dom2.append(card)
+		print('CUR DOM2: {}'.format(dom2))
+
+		dom = list(set(dom1+dom2))
+		dom = dom+cur_dom
+
+		new_dom = [card for card in dom if (dom.count(card) == 1 and card in cur_dom)]
+
+		return new_dom
 
 
 	def respond_to_suggestion(self, suggestion):
@@ -374,5 +428,42 @@ class CSPAgent(Agent):
 		else:
 			sets.append(domain)
 
+	def _find_probability(self):
+		num_weapons = 0
+		num_rooms = 0
+		num_suspects = 0
+		for card in self.hand.get_cards():
+			if card.typ == 'Weapon':
+				num_weapons +=1 
+			elif card.typ == 'Room':
+				num_rooms+=1
+			else:
+				num_suspects+=1
+		for card in self.first_opponent_hand.get_cards():
+			if card.assignedValue != None:
+				if card.typ == 'Weapon':
+					num_weapons +=1 
+				elif card.typ == 'Room':
+					num_rooms+=1
+				else:
+					num_suspects+=1
+		for card in self.second_opponent_hand.get_cards():
+			if card.assignedValue != None:
+				if card.typ == 'Weapon':
+					num_weapons +=1 
+				elif card.typ == 'Room':
+					num_rooms+=1
+				else:
+					num_suspects+=1	
+		return (1/(6-num_weapons))*(1/(6-num_suspects))*(1/(9-num_rooms))*100
 
+	def _find_probability_room(self):
+		return 100/self.caseFileRoom.cur_domain_size()
 	
+	def _find_probability_weapon(self):
+		return 100/self.caseFileWeapon.cur_domain_size()
+
+	def _find_probability_suspect(self):
+		return 100/self.caseFileSuspect.cur_domain_size()
+
+

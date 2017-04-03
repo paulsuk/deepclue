@@ -82,3 +82,6 @@ class SimpleRandom(Agent):
 		was_correct is true if the accusation was correct (and the game ends)
 		'''
 		return
+
+
+

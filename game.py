@@ -4,6 +4,8 @@ import time
 import functools
 import numpy as np
 from SimpleRandom import *
+from CSPAgent import *
+from ProbAgent import *
 import pdb
 
 '''
@@ -234,20 +236,19 @@ class Game(object):
 		print("suggester suggests: {}".format(cards))
 
 
-
 if __name__ == '__main__':
 	game = Game()
-	p1 = SimpleRandom('paul')
-	p2 = SimpleRandom('grace')
+	p1 = CSPAgent('paul')
+	p2 = ProbAgent('grace')
 	p3 = SimpleRandom('gabe')
 	game.init_players(p1, p2, p3)
 
 	name, i = game.play_game()
 	print("{} won after {} turns".format(name, i))
 
-	game.reset()
+#	game.reset()
 
-	name, i = game.play_game()
-	print("{} won after {} turns".format(name, i))
+#	name, i = game.play_game()
+#	print("{} won after {} turns".format(name, i))
 
 
