@@ -5,6 +5,7 @@ import functools
 import numpy as np
 from SimpleRandom import *
 from CSPAgent import *
+from ProbAgent import *
 import pdb
 
 '''
@@ -238,7 +239,7 @@ class Game(object):
 if __name__ == '__main__':
 	game = Game()
 	p1 = CSPAgent('paul')
-	p2 = CSPAgent('grace')
+	p2 = ProbAgent('grace')
 	p3 = SimpleRandom('gabe')
 	game.init_players(p1, p2, p3)
 
