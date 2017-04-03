@@ -2,13 +2,8 @@
 possess those cards, and after all enemy agent hands are pruned, the casefile cards are pruned.
 Shows cards randomly. '''
 
-# TODO: Make a reset function
-# TODO: make an information theory one
-
 from game import *
 from cspclue import *
-import itertools
-import numpy as np
 
 class PruneEnemiesAgent(Agent):
 
@@ -163,5 +158,19 @@ class PruneEnemiesAgent(Agent):
 
 		return
 
-if __name__ == '__main__':
-	agent = PruneEnemiesAgent('Player1')
+	def reset(self):
+		''' Resets all the init values so that the game can be re-run '''
+
+		self.pruned_hand_from_casefile = False
+
+		# Initialize CSPs for other Agents
+		# Begin by initializing the opposing agent's possible cards (and removing my cards)
+		domain = WEAPONS + ROOMS + SUSPECTS
+		self.p1cards = [Card(typ = None, domain=domain)]*6
+		self.p2cards = [Card(typ = None, domain=domain)]*6
+
+		# Create the constraints for the player cards
+		self.p1constraint = Constraint(name = 'p1_constraint', scope = self.p1cards)
+		self.p2constraint = Constraint(name = 'p2_constraint', scope = self.p2cards)
+
+		return

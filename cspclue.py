@@ -92,6 +92,15 @@ class Card:
 		self.name = name
 		self.assignedValue = name
 
+	def update_type(self):
+		if self.assignedValue != None and self.typ == None:
+			if self.assignedValue in WEAPONS:
+				self.typ = 'Weapon'
+			elif self.assignedValue in ROOMS:
+				self.typ = 'Room'
+			else:
+				self.typ = 'Suspect'
+
 	def add_domain_values(self, values):
 		'''Add additional domain values to the domain
 		   Removals not supported removals'''
@@ -562,7 +571,7 @@ class Hand(object):
 		'''
 		Initialize 6 empty card objects into hand
 		'''
-		self.cards = [Card('Room', domain=WEAPONS+ROOMS+SUSPECTS)]*6
+		self.cards = [Card(None, domain=WEAPONS+ROOMS+SUSPECTS)]*6
 
 	def add_card(self, card):
 		'''
@@ -588,6 +597,25 @@ class Hand(object):
 
 	def get_cards(self):
 		return (list(self.cards))
+
+	def pruneHand(self, know_hand):
+		'''
+		Prunes opponent_hand of card values in self.hand 
+		'''
+		for op_card in self.cards:
+		  for card in know_hand.get_cards():
+		    op_card.prune_value(card.assignedValue)
+
+	def get_assigned_card_values(self):
+		'''
+		Returns list of assigned values of cards
+		in hand
+		'''
+		assigned = []
+		for c in self.cards:
+			assigned.append(c.get_assigned_value())
+		return assigned
+
 
 class Suggestion(object):
 
