@@ -65,13 +65,13 @@ class CSPAgent(Agent):
 		self._update_case(self.first_opponent_hand)
 		self._update_case(self.second_opponent_hand)
 
-		print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
-		print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
+		#print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
+		#print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
 
-		print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
-		print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
+		#print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
+		#print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
 
-		print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
+		#print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
 
 		#Make accusation
 		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
@@ -373,5 +373,6 @@ class CSPAgent(Agent):
 
 		else:
 			sets.append(domain)
+
 
 	

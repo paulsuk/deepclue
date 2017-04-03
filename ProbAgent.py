@@ -465,4 +465,5 @@ class ProbAgent(Agent):
 
 	def _find_probability_suspect(self):
 		return 100/self.caseFileSuspect.cur_domain_size()
-		
+
+
