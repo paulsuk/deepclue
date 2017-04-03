@@ -3,14 +3,17 @@ possess those cards, and after all enemy agent hands are pruned, the casefile ca
 Shows cards randomly. '''
 
 # TODO: Make a reset function
+# TODO: make an information theory one
 
 from game import *
+from cspclue import *
 import itertools
 
 class PruneEnemiesAgent(Agent):
 
 	def __init__(self, name):
-		super(Agent, self).__init__()
+		#super(Agent, self).__init__()
+		super().__init__(name)
 
 		self.pruned_hand_from_casefile = False
 
@@ -25,9 +28,12 @@ class PruneEnemiesAgent(Agent):
 		self.p2constraint = Constraint(name = 'p2_constraint', scope = self.p2cards)
 
 		#Add the satisfying tuples to the constraint
-		sat_tuples = list(itertools.permutations(domain, 6))
-		self.p1constraint.add_satisfying_tuples(sat_tuples)
-		self.p2constraint.add_satisfying_tuples(sat_tuples)
+		print("Before sat tuples")
+		print("Size of domain:", len(domain))
+		# sat_tuples = list(itertools.permutations(domain, 6))
+		# print("AT SAT TUPLES:", sat_tuples)
+		# self.p1constraint.add_satisfying_tuples(sat_tuples)
+		# self.p2constraint.add_satisfying_tuples(sat_tuples)
 
 	def make_move(self):
 		'''
@@ -43,9 +49,9 @@ class PruneEnemiesAgent(Agent):
 						card.prune_value(my_card.get_assigned_value())
 			self.pruned_hand_from_casefile = True
 
-		weapon_dom = self.caseFileWeapon.cur_dom()
-		room_dom = self.caseFileRoom.cur_dom()
-		suspect_dom = self.caseFileRoom.cur_dom()
+		weapon_dom = self.caseFileWeapon.cur_domain()
+		room_dom = self.caseFileRoom.cur_domain()
+		suspect_dom = self.caseFileRoom.cur_domain()
 		np.shuffle(weapon_dom)
 		np.shuffle(room_dom)
 		np.shuffle(suspect_dom)
