@@ -6,6 +6,7 @@ import numpy as np
 from PruneEnemies import *
 from SimpleRandom import *
 from CSPAgent import *
+from ProbAgent import *
 import pdb
 
 '''
@@ -239,10 +240,10 @@ class Game(object):
 
 if __name__ == '__main__':
 	game = Game()
-	p1 = SimpleRandom('paul')
-	p2 = SimpleRandom('grace')
-	p3 = PruneEnemiesAgent('gabe')
 
+	p1 = SimpleRandom('paul')
+	p2 = CSPAgent('grace')
+	p3 = PruneEnemiesAgent('gabe')
 	game.init_players(p1, p2, p3)
 
 	name, i = game.play_game()
