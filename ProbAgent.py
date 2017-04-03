@@ -1,7 +1,11 @@
 from game import *
 	
 	#ProbAgent has the same logic
-	#Make guess is based on probabilities
+	#Same as CSPAgent except for make_move()
+	#If probability of guessing a type is < 50% - remove
+	#sets' values from that type's current domain since
+	#there is atleast a 50 or 33 percent chance that a player
+	#has one of the cards 
 	
 
 class ProbAgent(Agent):
