@@ -31,6 +31,9 @@ class GameTreeProbAgent(Agent):
 		self.first_caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
 		self.first_caseFileRoom = Card(typ="Room", domain=ROOMS)
 
+		self.first_total_cur_dom = 15
+		self.second_total_cur_dom = 15
+
 		self.second_caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
 		self.second_caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
 		self.second_caseFileRoom = Card(typ="Room", domain=ROOMS)
@@ -59,8 +62,8 @@ class GameTreeProbAgent(Agent):
 			self.second_opponent_hand.pruneHand(self.hand)
 
 			#Initialize the probability for each value for both hands
-			self._init_dict(self.first_opponent_know)
-			self._init_dict(self.second_opponent_know)
+			#self._init_dict(self.first_opponent_know)
+			#self._init_dict(self.second_opponent_know)
 
 			np.random.shuffle(weapon_dom)
 			np.random.shuffle(room_dom)
@@ -84,11 +87,15 @@ class GameTreeProbAgent(Agent):
 		self._update_case(self.first_opponent_hand)
 		self._update_case(self.second_opponent_hand)
 
+		#Prune opponents assigned cards from the cur dom of the casefile
+		self._update_opp_case(self.firstOppName, self.first_opponent_hand)
+		self._update_opp_case(self.secondOppName, self.second_opponent_hand)
+
 		#Update dictionaries
-		self._update_dict(self.first_opponent_hand, self.first_opponent_sets, self.first_opponent_know, 
-			self.first_caseFileWeapon, self.first_caseFileSuspect, self.first_caseFileRoom)
-		self._update_dict(self.second_opponent_hand, self.second_opponent_sets, self.second_opponent_know,
-			self.second_caseFileWeapon, self.second_caseFileSuspect, self.second_caseFileRoom)
+		#self._update_dict(self.first_opponent_hand, self.first_opponent_sets, self.first_opponent_know, 
+		#	self.first_caseFileWeapon, self.first_caseFileSuspect, self.first_caseFileRoom)
+		#self._update_dict(self.second_opponent_hand, self.second_opponent_sets, self.second_opponent_know,
+		#	self.second_caseFileWeapon, self.second_caseFileSuspect, self.second_caseFileRoom)
 
 		print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
 		print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
@@ -102,8 +109,11 @@ class GameTreeProbAgent(Agent):
 		#	print("OP2: CARD: {} PROBABILITY: {}".format(key, value))
 
 		print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
-
+	
 		prob = self._find_probability()
+
+		print("CUR DOM PROBABILITY {}: {}".format(self.firstOppName, self.first_total_cur_dom))
+		print("CUR DOM PROBABILITY {}: {}".format(self.secondOppName, self.second_total_cur_dom))
 
 		#print("PROBABILITY of correctly guessing based on hands: {}%".format(prob))
 		#print("PROBABILITY of correctly guessing weapon: {}%".format(self._find_probability_weapon()))
@@ -126,6 +136,30 @@ class GameTreeProbAgent(Agent):
 			accusation['Suspect'] = self.caseFileSuspect
 			return accusation
 		
+		#Make accusation if others are close - at least one section figured out
+		'''if (self.first_total_cur_dom < 9 or self.second_total_cur_dom < 9):
+			small_room = self._smaller_dom(room_dom, ROOMS)
+			small_weapon = self._smaller_dom(weapon_dom, WEAPONS)
+			small_suspect = self._smaller_dom(suspect_dom, SUSPECTS)
+
+			np.random.shuffle(small_room)
+			np.random.shuffle(small_weapon)
+			np.random.shuffle(small_suspect)
+
+			self.caseFileRoom.assign(small_room[0])
+			self.caseFileSuspect.assign(small_suspect[0])
+			self.caseFileWeapon.assign(small_weapon[0])
+
+			print("******************* GUESSED BC SOMEONE WAS CLOSE ******************")
+			print("FROM {} {} {}. GUESSED {} {} {}".format(small_room, small_weapon, small_suspect, small_room[0],
+				small_weapon[0], small_suspect[0]))
+
+			accusation = {}
+			accusation['Room'] = self.caseFileRoom
+			accusation['Weapon'] = self.caseFileWeapon
+			accusation['Suspect'] = self.caseFileSuspect
+			return accusation'''
+
 		#Make suggestion - keep as close to prev suggestion as possible
 		else:
 			if self._find_probability_weapon() < 50:
@@ -201,13 +235,16 @@ class GameTreeProbAgent(Agent):
 
 		CSPAgent: Return room last (becomes more rooms - harder to figure out)
 		'''
-		if suggestion.responder == self.firstOppName:
+		if suggestion.suggester == self.firstOppName:
 			p = [None]*3
 			p[1] = self._post_probability_weapon_player(self.firstOppName)
 			p[2] = self._post_probability_suspect_player(self.firstOppName)			
 			p[0] = self._post_probability_room_player(self.firstOppName)
 
 			answer = self._find_lowest_response(suggestion, p)
+			if answer != None:
+				print('Reduce {} cur domain'.format(self.firstOppName))
+				self._update_cur_dom(self.firstOppName)
 			return answer
 		else:
 			p = [None]*3
@@ -216,6 +253,9 @@ class GameTreeProbAgent(Agent):
 			p[2] = self._post_probability_suspect_player(self.secondOppName)
 
 			answer = self._find_lowest_response(suggestion, p)
+			if answer != None:
+				print('Reduce {} cur domain'.format(self.secondOppName))
+				self._update_cur_dom(self.secondOppName)
 			return answer
 
 
@@ -232,7 +272,11 @@ class GameTreeProbAgent(Agent):
 		if did_respond:
 			if suggestion.responder == self.firstOppName:
 				self._add_domain(suggestion, self.first_opponent_hand, self.first_opponent_sets)
+				print('Reduce {} cur domain'.format(suggestion.suggester))
+				self._update_cur_dom(suggestion.suggester)
 			elif suggestion.responder == self.secondOppName:
+				self._update_cur_dom(suggestion.suggester)
+				print('Reduce {} cur domain'.format(suggestion.suggester))
 				self._add_domain(suggestion, self.second_opponent_hand, self.second_opponent_sets)
 			
 		#If opponent did not respond, they do not have the suggested
@@ -242,7 +286,6 @@ class GameTreeProbAgent(Agent):
 		else:
 			if suggestion.responder == self.firstOppName:
 				self._prune_sug(suggestion, self.first_opponent_hand, self.first_opponent_sets)
-
 
 	def update_from_response(self, suggestion, response):
 		'''
@@ -278,7 +321,6 @@ class GameTreeProbAgent(Agent):
 						self.first_opponent_hand.add_card(card)
 
 			else:
-
 				#Add value to responder's hand
 				assigned = self.second_opponent_hand.get_assigned_card_values()
 
@@ -409,6 +451,45 @@ class GameTreeProbAgent(Agent):
 					if card.in_cur_domain(value):
 						card.prune_value(value)
 
+
+	def _update_opp_case(self, name, hand):
+		'''
+		Removed opp player's cards from opp player's casefile
+		'''
+		if name == self.firstOppName:
+			for card in hand.get_cards():
+				if card.is_assigned():
+					if card.typ == 'Weapon' and self.first_caseFileWeapon.in_cur_domain(card.assignedValue):
+						self.first_caseFileWeapon.prune_value(card.assignedValue)
+					elif card.typ == 'Room' and self.first_caseFileRoom.in_cur_domain(card.assignedValue):
+						self.first_caseFileRoom.prune_value(card.assignedValue)
+					elif card.typ == 'Suspect' and self.first_caseFileSuspect.in_cur_domain(card.assignedValue):
+						self.first_caseFileSuspect.prune_value(card.assignedValue)
+					else:
+						continue
+		else:
+			for card in hand.get_cards():
+				if card.is_assigned():
+					if card.typ == 'Weapon' and self.second_caseFileWeapon.in_cur_domain(card.assignedValue):
+						self.second_caseFileWeapon.prune_value(card.assignedValue)
+					elif card.typ == 'Room' and self.second_caseFileRoom.in_cur_domain(card.assignedValue):
+						self.second_caseFileRoom.prune_value(card.assignedValue)
+					elif card.typ == 'Suspect' and self.second_caseFileSuspect.in_cur_domain(card.assignedValue):
+						self.second_caseFileSuspect.prune_value(card.assignedValue)
+					else:
+						continue
+	
+	def _prune_opp_case(self):
+		'''
+		Prune cards that agent has shown opponents from opponents caseFile
+		'''
+
+	def _update_cur_dom(self, name):
+		if name == self.firstOppName:
+			self.first_total_cur_dom -= 1
+		else:
+			self.second_total_cur_dom -= 1	
+
 	def _remove_dict(self, d, domain):
 		'''
 		Set keys' values in domain to None (no longer know anything about)
@@ -417,6 +498,7 @@ class GameTreeProbAgent(Agent):
 		for value in domain:
 			if d.get(value) == None or d.get(value) < 100:
 				d[value] = None
+				
 
 	def _update_dict(self, hand, sets, d, cfw, cfs, cfr):
 		'''
@@ -589,6 +671,12 @@ class GameTreeProbAgent(Agent):
 			return 100/(self.first_caseFileSuspect.cur_domain_size()-1)
 		else:
 			return 100/(self.second_caseFileSuspect.cur_domain_size()-1)
+	
+	def _find_total_probability(self, name):
+		if name == self.firstOppName:
+			return 100/(self.first_total_cur_dom)
+		else:
+			return 100/(self.second_total_cur_dom)
 
 	def _find_lowest_response(self, suggestion, p):
 		'''
