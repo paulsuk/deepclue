@@ -5,10 +5,10 @@ import functools
 import matplotlib.pyplot as plt
 import numpy as np
 from SimpleRandom import *
-from CSPAgent import *
+from IntuitionAgent import *
 from SATAgent import *
 from ProbAgent import *
-from GameTreeProbAgent import *
+from GameTreeAgent import *
 from AlphaBetaAgent import *
 import pdb
 
@@ -327,12 +327,12 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 
 if __name__ == '__main__':
 	game = Game()
-	p1 = AlphaBetaAgent('AB1')
-	p2 = AlphaBetaAgent('AB2')
-	p3 = AlphaBetaAgent('AB3')
+	p1 = GameTreeAgent('GT1')
+	p2 = GameTreeAgent('GT2')
+	p3 = GameTreeAgent('GT3')
 
 	#game.init_players(p1, p2, p3)
 	#name, i = game.play_game(verbose=True)
 	#print("{} won after {} turns".format(name, i))
-	compare(p1, p2, p3, "AB v AB v AB", n=10000, verbose=False)
+	compare(p1, p2, p3, "GT v GT v GT", n=10000, verbose=False)
 
