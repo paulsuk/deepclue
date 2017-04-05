@@ -7,6 +7,7 @@ from SimpleRandom import *
 from CSPAgent import *
 from ProbAgent import *
 from GameTreeProbAgent import *
+from AlphaBetaAgent import *
 import pdb
 
 '''
@@ -236,11 +237,10 @@ class Game(object):
 		cards = suggestion.get_cards()
 		print("suggester suggests: {}".format(cards))
 
-
 if __name__ == '__main__':
 	game = Game()
 	p1 = CSPAgent('paul')
-	p2 = GameTreeProbAgent('grace')
+	p2 = AlphaBetaAgent('grace')
 	p3 = SimpleRandom('gabe')
 	game.init_players(p1, p2, p3)
 
