@@ -5,10 +5,9 @@ Shows cards randomly. '''
 from game import *
 from cspclue import *
 
-class PruneEnemiesAgent(Agent):
+class SATAgent(Agent):
 
 	def __init__(self, name):
-		#super(Agent, self).__init__()
 		super().__init__(name)
 
 		self.pruned_hand_from_casefile = False
@@ -33,7 +32,6 @@ class PruneEnemiesAgent(Agent):
 		# INITIAL CHECK ROUTINES
 		if not self.pruned_hand_from_casefile:
 			for my_card in self.hand.get_cards():
-				print(my_card.get_assigned_value())
 				# Prune values in my hand from enemies hands
 				for cards_list in [self.p2cards, self.p3cards]:
 					for card in cards_list:
@@ -49,13 +47,6 @@ class PruneEnemiesAgent(Agent):
 
 			self.pruned_hand_from_casefile = True
 
-		room_copy = ROOMS
-		weapon_copy = WEAPONS
-		suspect_copy = SUSPECTS
-		np.random.shuffle(weapon_copy)
-		np.random.shuffle(room_copy)
-		np.random.shuffle(suspect_copy)
-
 		weapon_dom = self.caseFileWeapon.cur_domain()
 		room_dom = self.caseFileRoom.cur_domain()
 		suspect_dom = self.caseFileSuspect.cur_domain()
@@ -63,6 +54,7 @@ class PruneEnemiesAgent(Agent):
 		np.random.shuffle(room_dom)
 		np.random.shuffle(suspect_dom)
 
+		# Check if the weapon, room, and suspect domains are 1.
 		if (len(weapon_dom) == 1 and len(room_dom) == 1 and len(suspect_dom) == 1):
 			accusation = {}
 			self.caseFileWeapon.assign(weapon_dom[0])
@@ -72,13 +64,19 @@ class PruneEnemiesAgent(Agent):
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
 
-			if self.check_SAT():
-				return accusation
+			# If the enemy player domains are of size 6, then the accusation was
+			# determined from information gathered from the enemies. This requires
+			# checking that all SAT constraints are satisfied (that the agent assumption
+			# is correct).
+			if (self.p3cards[0].cur_domain_size() == 6) and (self.p2cards[0].cur_domain_size() == 6):
+				if self.check_SAT():
+					print("*****Attained a solution through indirect information, SAT Clause Satisfied****")
+					return accusation
 			else:
-				print("Accusation does not meet the SAT constraint")
-			return accusation
+				print("****Attained a solution through direct information*****")
+				return accusation
 		else:
-			suggestion = Suggestion(self.name, self.firstOppName, weapon_copy[0], room_copy[0], suspect_copy[0])
+			suggestion = Suggestion(self.name, self.firstOppName, weapon_dom[0], room_dom[0], suspect_dom[0])
 			return suggestion
 
 	def respond_to_suggestion(self, suggestion):
@@ -126,8 +124,9 @@ class PruneEnemiesAgent(Agent):
 		# Since all cards are pruned at once every time an information is received, only have to check one card
 
 		# If Know one enemy's cards for certain, prune the casefile.
-		for cards_list in [self.p2cards, self.p3cards]:
-			if (cards_list[0].cur_domain_size() == 6):
+		#for cards_list in [self.p2cards, self.p3cards]:
+		if (self.p2cards[0].cur_domain_size() == 6) and (self.p3cards[0].cur_domain_size() == 6):
+			for cards_list in [self.p2cards, self.p3cards]:
 				dom = cards_list[0].cur_domain()
 
 				#Get the domain of all cards (the same for all cards)
@@ -140,7 +139,6 @@ class PruneEnemiesAgent(Agent):
 						self.caseFileSuspect.prune_value(value)
 
 			# Case file domain sizes should now be 1.
-
 		return
 
 	def update_from_response(self, suggestion, response):
@@ -220,7 +218,7 @@ class PruneEnemiesAgent(Agent):
 
 			# 2. If a card is in one place, it cannot be in another place
 			for i in range(len(locations)):
-				only_one_place *= not SAT_dict[value][locations[i%4]] or not (SAT_dict[value][locations[(i+1)%4]] or SAT_dict[value][locations[(i+2)%4]] or SAT_dict[value][locations[(i+3)%4]])
+				only_one_place *= not SAT_dict[value][locations[i%4]] or (not (SAT_dict[value][locations[(i+1)%4]] or SAT_dict[value][locations[(i+2)%4]] or SAT_dict[value][locations[(i+3)%4]]))
 
 			# 3. There is at least one card in each category in the Case FIle
 			for i in range(len(locations)):

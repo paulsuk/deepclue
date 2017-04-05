@@ -176,6 +176,8 @@ class Game(object):
 
 				else:
 					# suggester made an accusation
+					print("**********************************")
+					print("Accusation made: {}".format(move))
 					was_correct = self._check_accusation(move)
 					accuser_name = suggester.name
 					suggester.observe_accusation(accuser_name, was_correct)
@@ -185,10 +187,11 @@ class Game(object):
 					if was_correct:
 						finished = True
 					else:
+						print("Player {} Eliminated".format(accuser_name))
 						isNotEliminated[i] = False
 
-				i = (i + 1) % 3
 				turn_num += 1
+			i = (i + 1) % 3
 
 		return suggester.name, turn_num
 
@@ -242,8 +245,8 @@ if __name__ == '__main__':
 	game = Game()
 
 	p1 = SimpleRandom('paul')
-	p2 = PruneEnemiesAgent('grace')
-	p3 = PruneEnemiesAgent('gabe')
+	p2 = SimpleRandom('grace')
+	p3 = SATAgent('gabe')
 	game.init_players(p1, p2, p3)
 
 	name, i = game.play_game()
