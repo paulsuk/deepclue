@@ -11,7 +11,7 @@ from game import *
 	#a suggestion
 	#ALSO - Guess if think opponent will guess on next turn
 	
-class GameTreeProbAgent(Agent):
+class GameTreeAgent(Agent):
 	def __init__(self, name):
 		super().__init__(name)
 
