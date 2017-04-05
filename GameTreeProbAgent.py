@@ -23,10 +23,6 @@ class GameTreeProbAgent(Agent):
 		self.first_opponent_sets = []
 		self.second_opponent_sets = []
 
-		#Keep track of what each hand (might) know, dict: key is card and percentage
-		self.first_opponent_know = {}
-		self.second_opponent_know = {}
-
 		self.first_caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
 		self.first_caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
 		self.first_caseFileRoom = Card(typ="Room", domain=ROOMS)
@@ -55,6 +51,9 @@ class GameTreeProbAgent(Agent):
 		room_dom = self.caseFileRoom.cur_domain()
 		suspect_dom = self.caseFileSuspect.cur_domain()
 
+		self.first_opponent_sets = [x for x in self.first_opponent_sets if x]
+		self.second_opponent_sets = [x for x in self.second_opponent_sets if x]
+
 		#For the first tern - randomly make a suggestion
 		if None in self.past_suggestion:
 			#Prune agents cards from opponents' hands
@@ -77,8 +76,8 @@ class GameTreeProbAgent(Agent):
 			return suggestion
 
 		#Update the player's hands and sets
-		self._update_player(self.first_opponent_hand, self.first_opponent_sets, self.first_opponent_know)
-		self._update_player(self.second_opponent_hand, self.second_opponent_sets, self.second_opponent_know)
+		self._update_player(self.first_opponent_hand, self.first_opponent_sets)
+		self._update_player(self.second_opponent_hand, self.second_opponent_sets)
 		
 		#Prune assigned values in one hand from the other
 		self._update_each_other()
@@ -91,31 +90,20 @@ class GameTreeProbAgent(Agent):
 		self._update_opp_case(self.firstOppName, self.first_opponent_hand)
 		self._update_opp_case(self.secondOppName, self.second_opponent_hand)
 
-		#Update dictionaries
-		#self._update_dict(self.first_opponent_hand, self.first_opponent_sets, self.first_opponent_know, 
-		#	self.first_caseFileWeapon, self.first_caseFileSuspect, self.first_caseFileRoom)
-		#self._update_dict(self.second_opponent_hand, self.second_opponent_sets, self.second_opponent_know,
-		#	self.second_caseFileWeapon, self.second_caseFileSuspect, self.second_caseFileRoom)
+		#print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
+		#print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
 
-		print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
-		print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
+		#print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
+		#print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
 
-		print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
-		print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
-
-		#for key, value in self.first_opponent_know.items():
-		#	print("OP1: CARD: {} PROBABILITY: {}".format(key, value))
-		#for key, value in self.second_opponent_know.items():
-		#	print("OP2: CARD: {} PROBABILITY: {}".format(key, value))
-
-		print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
-		print("CF {} : W{}: R:{} S:{}".format(self.firstOppName, self.first_caseFileWeapon.cur_domain(), self.first_caseFileRoom.cur_domain(), self.first_caseFileSuspect.cur_domain()))
-		print("CF {} : W{}: R:{} S:{}".format(self.secondOppName, self.second_caseFileWeapon.cur_domain(), self.second_caseFileRoom.cur_domain(), self.second_caseFileSuspect.cur_domain()))
+		#print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
+		#print("CF {} : W{}: R:{} S:{}".format(self.firstOppName, self.first_caseFileWeapon.cur_domain(), self.first_caseFileRoom.cur_domain(), self.first_caseFileSuspect.cur_domain()))
+		#print("CF {} : W{}: R:{} S:{}".format(self.secondOppName, self.second_caseFileWeapon.cur_domain(), self.second_caseFileRoom.cur_domain(), self.second_caseFileSuspect.cur_domain()))
 
 		prob = self._find_probability()
 
-		print("CUR DOM PROBABILITY {}: {}".format(self.firstOppName, self.first_total_cur_dom))
-		print("CUR DOM PROBABILITY {}: {}".format(self.secondOppName, self.second_total_cur_dom))
+		#print("CUR DOM PROBABILITY {}: {}".format(self.firstOppName, self.first_total_cur_dom))
+		#print("CUR DOM PROBABILITY {}: {}".format(self.secondOppName, self.second_total_cur_dom))
 
 		#print("PROBABILITY of correctly guessing based on hands: {}%".format(prob))
 		#print("PROBABILITY of correctly guessing weapon: {}%".format(self._find_probability_weapon()))
@@ -139,7 +127,7 @@ class GameTreeProbAgent(Agent):
 			return accusation
 		
 		#Make accusation if others are close - at least one section figured out
-			'''if (self.first_total_cur_dom < 9 or self.second_total_cur_dom < 9):
+		if (self.first_total_cur_dom < 7 or self.second_total_cur_dom < 7):
 			small_room = self._smaller_dom(room_dom, ROOMS)
 			small_weapon = self._smaller_dom(weapon_dom, WEAPONS)
 			small_suspect = self._smaller_dom(suspect_dom, SUSPECTS)
@@ -160,7 +148,7 @@ class GameTreeProbAgent(Agent):
 			accusation['Room'] = self.caseFileRoom
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
-			return accusation'''
+			return accusation
 
 		#Make suggestion - keep as close to prev suggestion as possible
 		else:
@@ -199,12 +187,6 @@ class GameTreeProbAgent(Agent):
 		Return new current domain where the elements from the domain
 		are removed
 		'''
-		#Remove empty lists from sets
-		set1 = [x for x in self.first_opponent_sets if x]
-		self.first_opponent_sets = set1
-		set2 = [x for x in self.second_opponent_sets if x]
-		self.second_opponent_sets = set2
-		
 		dom1 = []
 		dom2 = []
 
@@ -377,6 +359,18 @@ class GameTreeProbAgent(Agent):
 
 		self.past_suggestion = [None]*3
 
+		self.first_caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
+		self.first_caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
+		self.first_caseFileRoom = Card(typ="Room", domain=ROOMS)
+
+		self.first_total_cur_dom = 15
+		self.second_total_cur_dom = 15
+
+		self.second_caseFileWeapon = Card(typ="Weapon", domain=WEAPONS)
+		self.second_caseFileSuspect = Card(typ="Suspect", domain=SUSPECTS)
+		self.second_caseFileRoom = Card(typ="Room", domain=ROOMS)
+
+
 	def _update_case(self, hand):
 		'''
 		Prune assigned values of cards in hand from casefile
@@ -392,7 +386,7 @@ class GameTreeProbAgent(Agent):
 				else:
 					continue
 
-	def _update_player(self, hand, sets, d):
+	def _update_player(self, hand, sets):
 		'''
 		Update player's set and hand by pruning cards with domain of length 1
 		and the entire domain if a value in it is already assigned to a card
@@ -431,7 +425,6 @@ class GameTreeProbAgent(Agent):
 			overlap = assigned.intersection(domain)
 			if len(overlap) > 0:
 				sets.remove(domain)
-				self._remove_dict(d, domain)
 			#remove empty domains and already considered domains
 			elif len(domain) == 1:
 				sets.remove(domain)
@@ -675,21 +668,39 @@ class GameTreeProbAgent(Agent):
 	
 	def _post_probability_room_player(self, name):
 		if name == self.firstOppName:
-			return 100/(self.first_caseFileRoom.cur_domain_size()-1)
+			if self.first_caseFileRoom.cur_domain_size() == 1:
+				return 100
+			else:
+				return 100/(self.first_caseFileRoom.cur_domain_size()-1)
 		else:
-			return 100/(self.second_caseFileRoom.cur_domain_size()-1)
+			if self.second_caseFileRoom.cur_domain_size() == 1:
+				return 100
+			else:
+				return 100/(self.second_caseFileRoom.cur_domain_size()-1)
 
 	def _post_probability_weapon_player(self, name):
 		if name == self.firstOppName:
-			return 100/(self.first_caseFileWeapon.cur_domain_size()-1)
+			if self.first_caseFileWeapon.cur_domain_size() == 1:
+				return 100
+			else:
+				return 100/(self.first_caseFileWeapon.cur_domain_size()-1)
 		else:
-			return 100/(self.second_caseFileWeapon.cur_domain_size()-1)
+			if self.second_caseFileWeapon.cur_domain_size() == 1:
+				return 100
+			else:
+				return 100/(self.second_caseFileWeapon.cur_domain_size()-1)
 
 	def _post_probability_suspect_player(self, name):
 		if name == self.firstOppName:
-			return 100/(self.first_caseFileSuspect.cur_domain_size()-1)
+			if self.first_caseFileSuspect.cur_domain_size() == 1:
+				return 100
+			else:
+				return 100/(self.first_caseFileSuspect.cur_domain_size()-1)
 		else:
-			return 100/(self.second_caseFileSuspect.cur_domain_size()-1)
+			if self.second_caseFileSuspect.cur_domain_size() == 1:
+				return 100
+			else:
+				return 100/(self.second_caseFileSuspect.cur_domain_size()-1)
 	
 	def _find_total_probability(self, name):
 		if name == self.firstOppName:

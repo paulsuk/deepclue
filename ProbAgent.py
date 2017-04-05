@@ -37,6 +37,9 @@ class ProbAgent(Agent):
 		room_dom = self.caseFileRoom.cur_domain()
 		suspect_dom = self.caseFileSuspect.cur_domain()
 
+		self.first_opponent_sets = [x for x in self.first_opponent_sets if x]
+		self.second_opponent_sets = [x for x in self.second_opponent_sets if x]
+
 		#For the first tern - randomly make a suggestion
 		if None in self.past_suggestion:
 			#Prune agents cards from opponents' hands
@@ -130,12 +133,6 @@ class ProbAgent(Agent):
 		Return new current domain where the elements from the domain
 		are removed
 		'''
-		#Remove empty lists from sets
-		set1 = [x for x in self.first_opponent_sets if x]
-		self.first_opponent_sets = set1
-		set2 = [x for x in self.second_opponent_sets if x]
-		self.second_opponent_sets = set2
-		
 		dom1 = []
 		dom2 = []
 

@@ -321,8 +321,12 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 	plt.savefig(testname + "_order.png")		
 
 if __name__ == '__main__':
-	p1 = GameTreeProbAgent('Simple1')
-	p2 = SimpleRandom('Simple2')
-	p3 = SimpleRandom('Simple3')
+	game = Game()
+	p1 = GameTreeProbAgent('GameTree')
+	p2 = CSPAgent('CSPAgent')
+	p3 = ProbAgent('Pagent')
 
-	compare(p1, p2, p3, "simple_randoms", n=10000, verbose=False)
+	game.init_players(p1, p2, p3)
+	name, i = game.play_game(verbose=True)
+	print("{} won after {} turns".format(name, i))
+	#compare(p1, p2, p3, "simple_randoms", n=10000, verbose=False)
