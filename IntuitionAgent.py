@@ -1,14 +1,10 @@
 from game import *
 	
-	#ProbAgent has the same logic
-	#Same as CSPAgent except for make_move()
-	#If probability of guessing a type is < 50% - remove
-	#sets' values from that type's current domain since
-	#there is atleast a 50 or 33 percent chance that a player
-	#has one of the cards 
+	#CSPAgent focuses on 'observe_suggestion()' function.
+	#- It observes the exchange as first opponent is the suggester
 	
 
-class ProbAgent(Agent):
+class IntuitionAgent(Agent):
 	def __init__(self, name):
 		super().__init__(name)
 
@@ -36,9 +32,6 @@ class ProbAgent(Agent):
 		weapon_dom = self.caseFileWeapon.cur_domain()
 		room_dom = self.caseFileRoom.cur_domain()
 		suspect_dom = self.caseFileSuspect.cur_domain()
-
-		self.first_opponent_sets = [x for x in self.first_opponent_sets if x]
-		self.second_opponent_sets = [x for x in self.second_opponent_sets if x]
 
 		#For the first tern - randomly make a suggestion
 		if None in self.past_suggestion:
@@ -68,17 +61,13 @@ class ProbAgent(Agent):
 		self._update_case(self.first_opponent_hand)
 		self._update_case(self.second_opponent_hand)
 
+		#print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
+		#print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
+
 		#print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
 		#print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
 
 		#print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
-
-		prob = self._find_probability()
-
-		#print("PROBABILITY of correctly guessing based on hands: {}%".format(prob))
-		#print("PROBABILITY of correctly guessing weapon: {}%".format(self._find_probability_weapon()))
-		#print("PROBABILITY of correctly guessing suspect: {}%".format(self._find_probability_suspect()))
-		#print("PROBABILITY of correctly guessing room: {}%".format(self._find_probability_room()))
 
 		#Make accusation
 		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
@@ -98,58 +87,17 @@ class ProbAgent(Agent):
 		
 		#Make suggestion - keep as close to prev suggestion as possible
 		else:
-			if self._find_probability_weapon() < 50:
-				new_dom = self._smaller_dom(weapon_dom, WEAPONS)
-				np.random.shuffle(new_dom)
-				self.past_suggestion[0] = weapon_dom[0]
-				#print("Guess Weapon from: {}".format(new_dom))
-			else:
+			if self.past_suggestion[0] not in weapon_dom:
 				np.random.shuffle(weapon_dom)
 				self.past_suggestion[0] = weapon_dom[0]
-
-			if self._find_probability_room() < 50:
-				new_dom = self._smaller_dom(room_dom, ROOMS)
-				np.random.shuffle(new_dom)
-				self.past_suggestion[1] = room_dom[0]
-				#print("Guess Room from: {}".format(new_dom))
-			else:
+			if self.past_suggestion[1] not in room_dom:
 				np.random.shuffle(room_dom)
 				self.past_suggestion[1] = room_dom[0]
-
-			if self._find_probability_suspect() < 50:
-				new_dom = self._smaller_dom(suspect_dom, SUSPECTS)
-				np.random.shuffle(new_dom)
-				self.past_suggestion[2] = suspect_dom[0]
-				#print("Guess Suspect from: {}".format(new_dom))
-			else:
+			if self.past_suggestion[2] not in suspect_dom:
 				np.random.shuffle(suspect_dom)
 				self.past_suggestion[2] = suspect_dom[0]
-
 			suggestion = Suggestion(self.name, self.firstOppName, self.past_suggestion[0], self.past_suggestion[1], self.past_suggestion[2])
 			return suggestion
-
-	def _smaller_dom(self, cur_dom, typ):
-		'''
-		Return new current domain where the elements from the domain
-		are removed
-		'''
-		dom1 = []
-		dom2 = []
-
-		for domain in self.first_opponent_sets:
-			for card in domain:
-				if card in typ:
-					dom1.append(card)
-		for domain in self.second_opponent_sets:
-			for card in domain:
-				if card in typ:
-					dom2.append(card)
-		dom = list(set(dom1+dom2))
-		dom = dom+cur_dom
-
-		new_dom = [card for card in dom if (dom.count(card) == 1 and card in cur_dom)]
-
-		return new_dom
 
 
 	def respond_to_suggestion(self, suggestion):
@@ -250,18 +198,18 @@ class ProbAgent(Agent):
 			if suggestion.responder == self.secondOppName:
 				if self.caseFileWeapon.cur_domain_size() != 1:
 					if self.caseFileWeapon.in_cur_domain(suggestion.weapon):
-						#print('**************FOUND WEAPON BC LUCKY GUESS****************')
+						print('**************FOUND WEAPON BC LUCKY GUESS****************')
 						self._prune_all(self.caseFileWeapon, suggestion.weapon)
 				if self.caseFileSuspect.cur_domain_size() != 1:
 					if self.caseFileSuspect.in_cur_domain(suggestion.suspect):
 						self._prune_all(self.caseFileSuspect, suggestion.suspect)
-						#print('*************FOUND SUSPECT BC LUCKY GUESS****************')
+						print('*************FOUND SUSPECT BC LUCKY GUESS****************')
 				if self.caseFileRoom.cur_domain_size() != 1:
 					if self.caseFileRoom.in_cur_domain(suggestion.room):
 						self._prune_all(self.caseFileRoom, suggestion.room)
-						#print('*************FOUND ROOM BC LUCKY GUESS*******************')
+						print('*************FOUND ROOM BC LUCKY GUESS*******************')
 
-				#print('Case file W:{} R:{} S:{}'.format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
+				print('Case file W:{} R:{} S:{}'.format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
 
 	def observe_accusation(self, was_accuser, was_correct):
 		'''
@@ -313,7 +261,7 @@ class ProbAgent(Agent):
 		for i, domain in enumerate(sets):
 			#Remove domains of size 1
 			if len(domain) == 1 and domain[0] not in hand.get_assigned_card_values() and None in hand.get_assigned_card_values():
-				#print('********************** ASSIGNED BECAUSE SIZE 1: UPDATE PLAYERS {} *************************'.format(domain[0]))
+				print('********************** ASSIGNED BECAUSE SIZE 1: UPDATE PLAYERS {} *************************'.format(domain[0]))
 				card = Card(typ=None, name=domain[0], domain=domain)
 				card.update_type()
 				hand.add_card(card)
@@ -322,17 +270,17 @@ class ProbAgent(Agent):
 				if self.caseFileWeapon.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileWeapon.cur_domain()[0])]
 					sets[i] = new_dom
-					#print('********************** CHANGED BC CF WEAPON KNOWN *************************')
+					print('********************** CHANGED BC CF WEAPON KNOWN *************************')
 			if self.caseFileSuspect.cur_domain_size() == 1:
 				if self.caseFileSuspect.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileSuspect.cur_domain()[0])]
 					sets[i] = new_dom
-					#print('********************** CHANGED BC CF SUSPECT KNOWN *************************')
+					print('********************** CHANGED BC CF SUSPECT KNOWN *************************')
 			if self.caseFileRoom.cur_domain_size() == 1:
 				if self.caseFileRoom.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileRoom.cur_domain()[0])]
 					sets[i] = new_dom
-					#print('********************** CHANGED BC CF ROOM KNOWN *************************')
+					print('********************** CHANGED BC CF ROOM KNOWN *************************')
 
 		for domain in copy:
 			#Prune if already assigned
@@ -386,8 +334,8 @@ class ProbAgent(Agent):
 		if len(sets) != 0:
 			for i, domain in enumerate(sets):
 				new_dom = [x for x in domain if (x != suggestion.suspect or x!= suggestion.room or x!=suggestion.weapon)]
-				#if new_dom != domain:
-				#print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX CHANGE MADE TO SETS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+				if new_dom != domain:
+					print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX CHANGE MADE TO SETS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 				sets[i] = new_dom
 
 
@@ -415,7 +363,7 @@ class ProbAgent(Agent):
 		#If only one value - assign value to an unassigned card 
 		if len(domain) == 1 and domain[0] not in hand.get_assigned_card_values() and None in hand.get_assigned_card_values():
 			#print("Domain: {}".format(domain))
-			#print("************************ ASSIGNED BC SIZE 1: ADD DOMAIN {} **************************".format(domain[0]))
+			print("************************ ASSIGNED BC SIZE 1: ADD DOMAIN {} **************************".format(domain[0]))
 			card = Card(typ=None, name=domain[0], domain=domain)
 			card.update_type()
 			hand.add_card(card)
@@ -423,43 +371,3 @@ class ProbAgent(Agent):
 
 		else:
 			sets.append(domain)
-
-	def _find_probability(self):
-		num_weapons = 0
-		num_rooms = 0
-		num_suspects = 0
-		for card in self.hand.get_cards():
-			if card.typ == 'Weapon':
-				num_weapons +=1 
-			elif card.typ == 'Room':
-				num_rooms+=1
-			else:
-				num_suspects+=1
-		for card in self.first_opponent_hand.get_cards():
-			if card.assignedValue != None:
-				if card.typ == 'Weapon':
-					num_weapons +=1 
-				elif card.typ == 'Room':
-					num_rooms+=1
-				else:
-					num_suspects+=1
-		for card in self.second_opponent_hand.get_cards():
-			if card.assignedValue != None:
-				if card.typ == 'Weapon':
-					num_weapons +=1 
-				elif card.typ == 'Room':
-					num_rooms+=1
-				else:
-					num_suspects+=1	
-		return (1/(6-num_weapons))*(1/(6-num_suspects))*(1/(9-num_rooms))*100
-
-	def _find_probability_room(self):
-		return 100/self.caseFileRoom.cur_domain_size()
-	
-	def _find_probability_weapon(self):
-		return 100/self.caseFileWeapon.cur_domain_size()
-
-	def _find_probability_suspect(self):
-		return 100/self.caseFileSuspect.cur_domain_size()
-
-

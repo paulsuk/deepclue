@@ -322,11 +322,11 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 
 if __name__ == '__main__':
 	game = Game()
-	p1 = GameTreeProbAgent('GameTree')
-	p2 = CSPAgent('CSPAgent')
-	p3 = ProbAgent('Pagent')
+	p1 = AlphaBetaAgent('AB1')
+	p2 = AlphaBetaAgent('AB2')
+	p3 = AlphaBetaAgent('AB3')
 
 	game.init_players(p1, p2, p3)
 	name, i = game.play_game(verbose=True)
-	print("{} won after {} turns".format(name, i))
-	#compare(p1, p2, p3, "simple_randoms", n=10000, verbose=False)
+	#print("{} won after {} turns".format(name, i))
+	compare(p1, p2, p3, "AB v AB v AB", n=10000, verbose=False)

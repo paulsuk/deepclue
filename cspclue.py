@@ -92,6 +92,9 @@ class Card:
 		self.name = name
 		self.assignedValue = name
 
+	def __str__(self):
+		return 'Var-{}'.format(self.assignedValue)
+
 	def update_type(self):
 		if self.assignedValue != None and self.typ == None:
 			if self.assignedValue in WEAPONS:
@@ -203,10 +206,7 @@ class Card:
 		return self.dom.index(value)
 
 	def __repr__(self):
-		return("Var-{}".format(self.name))
-
-	def __str__(self):
-		return("Var--{}".format(self.name))
+		return("Var-{}".format(self.assignedValue))
 
 	def print_all(self):
 		'''Also print the Card domain and current domain'''

@@ -136,13 +136,23 @@ class GameTreeProbAgent(Agent):
 			np.random.shuffle(small_weapon)
 			np.random.shuffle(small_suspect)
 
-			self.caseFileRoom.assign(small_room[0])
-			self.caseFileSuspect.assign(small_suspect[0])
-			self.caseFileWeapon.assign(small_weapon[0])
+
+			if len(small_room) == 0:
+				self.caseFileRoom.assign(room_dom[0])
+			else:
+				self.caseFileRoom.assign(small_room[0])
+			if len(small_suspect) == 0:
+				self.caseFileSuspect.assign(suspect_dom[0])
+			else:
+				self.caseFileSuspect.assign(small_suspect[0])
+			if len(small_weapon) == 0:
+				self.caseFileWeapon.assign(weapon_dom[0])
+			else:
+				self.caseFileWeapon.assign(small_weapon[0])
 
 			print("******************* GUESSED BC SOMEONE WAS CLOSE ******************")
-			print("FROM {} {} {}. GUESSED {} {} {}".format(small_room, small_weapon, small_suspect, small_room[0],
-				small_weapon[0], small_suspect[0]))
+			#print("FROM {} {} {}. GUESSED {} {} {}".format(small_room, small_weapon, small_suspect, small_room[0],
+			#	small_weapon[0], small_suspect[0]))
 
 			accusation = {}
 			accusation['Room'] = self.caseFileRoom
@@ -351,6 +361,7 @@ class GameTreeProbAgent(Agent):
 		'''
 		to reset for a new game!
 		'''
+		super().reset()
 		self.first_opponent_hand = Hand()
 		self.second_opponent_hand = Hand()
 		

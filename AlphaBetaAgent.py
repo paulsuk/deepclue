@@ -13,9 +13,9 @@ class AlphaBetaAgent(Agent):
 		self.first_opponent_hand = Hand()
 		self.second_opponent_hand = Hand()
 
-		print("START")
-		print("cards: {}".format(self.first_opponent_hand.get_cards()))
-		print("cards: {}".format(self.second_opponent_hand.get_cards()))
+		#print("START")
+		#print("cards: {}".format(self.first_opponent_hand.get_cards()))
+		#print("cards: {}".format(self.second_opponent_hand.get_cards()))
 
 		#Sets to keep track of potential domains for each hand
 		self.first_opponent_sets = []
@@ -64,14 +64,14 @@ class AlphaBetaAgent(Agent):
 		#Update level of tree
 		self._update_tree()
 
-		print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
-		print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
+		#print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
+		#print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
 
-		print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
-		print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
+		#print("Player {}'s set: {}".format(self.firstOppName, self.first_opponent_sets))
+		#print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
 
-		print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
-		print(self.combinations)
+		#print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
+		#print(self.combinations)
 
 		#Make accusation
 		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
@@ -199,18 +199,18 @@ class AlphaBetaAgent(Agent):
 			if suggestion.responder == self.secondOppName:
 				if self.caseFileWeapon.cur_domain_size() != 1:
 					if self.caseFileWeapon.in_cur_domain(suggestion.weapon):
-						print('**************FOUND WEAPON BC LUCKY GUESS****************')
+						#print('**************FOUND WEAPON BC LUCKY GUESS****************')
 						self._prune_all(self.caseFileWeapon, suggestion.weapon)
 				if self.caseFileSuspect.cur_domain_size() != 1:
 					if self.caseFileSuspect.in_cur_domain(suggestion.suspect):
 						self._prune_all(self.caseFileSuspect, suggestion.suspect)
-						print('*************FOUND SUSPECT BC LUCKY GUESS****************')
+						#print('*************FOUND SUSPECT BC LUCKY GUESS****************')
 				if self.caseFileRoom.cur_domain_size() != 1:
 					if self.caseFileRoom.in_cur_domain(suggestion.room):
 						self._prune_all(self.caseFileRoom, suggestion.room)
-						print('*************FOUND ROOM BC LUCKY GUESS*******************')
+						#print('*************FOUND ROOM BC LUCKY GUESS*******************')
 
-				print('Case file W:{} R:{} S:{}'.format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
+				#print('Case file W:{} R:{} S:{}'.format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
 
 	def observe_accusation(self, was_accuser, was_correct):
 		'''
@@ -224,6 +224,8 @@ class AlphaBetaAgent(Agent):
 		'''
 		to reset for a new game!
 		'''
+		super().reset()
+
 		self.first_opponent_hand = Hand()
 		self.second_opponent_hand = Hand()
 		
@@ -289,7 +291,7 @@ class AlphaBetaAgent(Agent):
 		for i, domain in enumerate(sets):
 			#Remove domains of size 1
 			if len(domain) == 1 and domain[0] not in hand.get_assigned_card_values() and None in hand.get_assigned_card_values():
-				print('********************** ASSIGNED BECAUSE SIZE 1: UPDATE PLAYERS {} *************************'.format(domain[0]))
+				#print('********************** ASSIGNED BECAUSE SIZE 1: UPDATE PLAYERS {} *************************'.format(domain[0]))
 				card = Card(typ=None, name=domain[0], domain=domain)
 				card.update_type()
 				hand.add_card(card)
@@ -298,17 +300,17 @@ class AlphaBetaAgent(Agent):
 				if self.caseFileWeapon.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileWeapon.cur_domain()[0])]
 					sets[i] = new_dom
-					print('********************** CHANGED BC CF WEAPON KNOWN *************************')
+					#print('********************** CHANGED BC CF WEAPON KNOWN *************************')
 			if self.caseFileSuspect.cur_domain_size() == 1:
 				if self.caseFileSuspect.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileSuspect.cur_domain()[0])]
 					sets[i] = new_dom
-					print('********************** CHANGED BC CF SUSPECT KNOWN *************************')
+					#print('********************** CHANGED BC CF SUSPECT KNOWN *************************')
 			if self.caseFileRoom.cur_domain_size() == 1:
 				if self.caseFileRoom.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileRoom.cur_domain()[0])]
 					sets[i] = new_dom
-					print('********************** CHANGED BC CF ROOM KNOWN *************************')
+					#print('********************** CHANGED BC CF ROOM KNOWN *************************')
 		
 		copy = sets
 		for domain in copy:
@@ -363,8 +365,8 @@ class AlphaBetaAgent(Agent):
 		if len(sets) != 0:
 			for i, domain in enumerate(sets):
 				new_dom = [x for x in domain if (x != suggestion.suspect or x!= suggestion.room or x!=suggestion.weapon)]
-				if new_dom != domain:
-					print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX CHANGE MADE TO SETS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+				#if new_dom != domain:
+				#print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX CHANGE MADE TO SETS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 				sets[i] = new_dom
 
 
@@ -392,7 +394,7 @@ class AlphaBetaAgent(Agent):
 		#If only one value - assign value to an unassigned card 
 		if len(domain) == 1 and domain[0] not in hand.get_assigned_card_values() and None in hand.get_assigned_card_values():
 			#print("Domain: {}".format(domain))
-			print("************************ ASSIGNED BC SIZE 1: ADD DOMAIN {} **************************".format(domain[0]))
+			#print("************************ ASSIGNED BC SIZE 1: ADD DOMAIN {} **************************".format(domain[0]))
 			card = Card(typ=None, name=domain[0], domain=domain)
 			card.update_type()
 			hand.add_card(card)
