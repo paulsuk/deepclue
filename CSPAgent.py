@@ -1,8 +1,8 @@
 from game import *
-	
+
 	#CSPAgent focuses on 'observe_suggestion()' function.
 	#- It observes the exchange as first opponent is the suggester
-	
+
 
 class CSPAgent(Agent):
 	def __init__(self, name):
@@ -57,7 +57,7 @@ class CSPAgent(Agent):
 		#Update the player's hands and sets
 		self._update_player(self.first_opponent_hand, self.first_opponent_sets)
 		self._update_player(self.second_opponent_hand, self.second_opponent_sets)
-		
+
 		#Prune assigned values in one hand from the other
 		self._update_each_other()
 
@@ -88,7 +88,7 @@ class CSPAgent(Agent):
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
 			return accusation
-		
+
 		#Make suggestion - keep as close to prev suggestion as possible
 		else:
 			if self.past_suggestion[0] not in weapon_dom:
@@ -139,7 +139,7 @@ class CSPAgent(Agent):
 				self._add_domain(suggestion, self.first_opponent_hand, self.first_opponent_sets)
 			elif suggestion.responder == self.secondOppName:
 				self._add_domain(suggestion, self.second_opponent_hand, self.second_opponent_sets)
-			
+
 		#If opponent did not respond, they do not have the suggested
 		#Weapon, room or suspect. Prune these from their cards.
 		#Also, prune values from domains in sets
@@ -152,10 +152,10 @@ class CSPAgent(Agent):
 		'''
 		after making a suggestion, this method will be called to respond to a response
 
-		- Doesnt have 
+		- Doesnt have
 			- prune from domain of sets
 			- prune from paul's hand
-		- Does have 
+		- Does have
 			- prune domain from sets
 			- prune from casefile
 			- add response to non assigned value
@@ -222,16 +222,19 @@ class CSPAgent(Agent):
 		was_correct is true if the accusation was correct (and the game ends)
 		'''
 		return
-	
+
 	def reset(self):
 		'''
 		to reset for a new game!
 		'''
 		super().reset()
+<<<<<<< HEAD
 
+=======
+>>>>>>> b6a3312f4ab3fbd893afef2ba05d054695a8d11f
 		self.first_opponent_hand = Hand()
 		self.second_opponent_hand = Hand()
-		
+
 		self.first_opponent_sets = []
 		self.second_opponent_sets = []
 
@@ -302,7 +305,7 @@ class CSPAgent(Agent):
 		'''
 		assigned_1 = set(self.first_opponent_hand.get_assigned_card_values())
 		assigned_2 = set(self.second_opponent_hand.get_assigned_card_values())
-			
+
 		for value in assigned_1:
 			if value != None:
 				for card in self.second_opponent_hand.get_cards():
@@ -353,7 +356,7 @@ class CSPAgent(Agent):
 		#Populate domain
 		for card in hand.get_cards():
 			#Do not add constraint if already know what card (or a card that) was shown
-			if (card.get_assigned_value() == suggestion.weapon or card.get_assigned_value() == suggestion.room 
+			if (card.get_assigned_value() == suggestion.weapon or card.get_assigned_value() == suggestion.room
 				or card.get_assigned_value() == suggestion.suspect):
 				return
 
@@ -363,8 +366,8 @@ class CSPAgent(Agent):
 				domain.append(suggestion.room)
 			if card.in_cur_domain(suggestion.suspect) and suggestion.suspect not in domain and suggestion.weapon not in my_cards:
 				domain.append(suggestion.suspect)
-			
-		#If only one value - assign value to an unassigned card 
+
+		#If only one value - assign value to an unassigned card
 		if len(domain) == 1 and domain[0] not in hand.get_assigned_card_values() and None in hand.get_assigned_card_values():
 			#print("Domain: {}".format(domain))
 			print("************************ ASSIGNED BC SIZE 1: ADD DOMAIN {} **************************".format(domain[0]))
@@ -375,6 +378,3 @@ class CSPAgent(Agent):
 
 		else:
 			sets.append(domain)
-
-
-	

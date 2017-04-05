@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from SimpleRandom import *
 from CSPAgent import *
+from SATAgent import *
 from ProbAgent import *
 from GameTreeProbAgent import *
 from AlphaBetaAgent import *
@@ -296,9 +297,13 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 	players = (p1.name, p2.name, p3.name)
 	order = ('first', 'second', 'last')
 	x_pos = np.arange(len(players))
+	for name in turns:
+		if not turns[name]:
+			turns[name] = [0]
+
 	avg_turns = [np.mean(turns[name]) for name in players]
 	win_totals = [wins[name] for name in players]
-	
+
 	plt.figure()
 	plt.bar(x_pos, avg_turns, align="center")
 	plt.xticks(x_pos, players)
@@ -318,7 +323,7 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 	plt.xticks(x_pos, order)
 	plt.ylabel("Wins")
 	plt.title("Guessing Order Wins out of {} games".format(n))
-	plt.savefig(testname + "_order.png")		
+	plt.savefig(testname + "_order.png")
 
 if __name__ == '__main__':
 	game = Game()
@@ -326,7 +331,8 @@ if __name__ == '__main__':
 	p2 = AlphaBetaAgent('AB2')
 	p3 = AlphaBetaAgent('AB3')
 
-	game.init_players(p1, p2, p3)
-	name, i = game.play_game(verbose=True)
+	#game.init_players(p1, p2, p3)
+	#name, i = game.play_game(verbose=True)
 	#print("{} won after {} turns".format(name, i))
 	compare(p1, p2, p3, "AB v AB v AB", n=10000, verbose=False)
+
