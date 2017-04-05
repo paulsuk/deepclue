@@ -1,6 +1,7 @@
 ''' This Agent assumes that all suggestions made by other Agents indicate that the respective agent does not
 possess those cards, and after all enemy agent hands are pruned, the casefile cards are pruned.
-Shows cards randomly. '''
+This agent accounts for the fact that it operates based off of an assumption, and uses a logic clause
+to recognize when this assumption has been broken and it then makes a random accusation.  '''
 
 from game import *
 from cspclue import *
@@ -47,6 +48,13 @@ class SATAgent(Agent):
 
 			self.pruned_hand_from_casefile = True
 
+		room_copy = ROOMS
+		weapon_copy = WEAPONS
+		suspect_copy = SUSPECTS
+		np.random.shuffle(weapon_copy)
+		np.random.shuffle(room_copy)
+		np.random.shuffle(suspect_copy)
+
 		weapon_dom = self.caseFileWeapon.cur_domain()
 		room_dom = self.caseFileRoom.cur_domain()
 		suspect_dom = self.caseFileSuspect.cur_domain()
@@ -72,6 +80,13 @@ class SATAgent(Agent):
 				if self.check_SAT():
 					print("*****Attained a solution through indirect information, SAT Clause Satisfied****")
 					return accusation
+				else:
+					print("*****Assumption was broken, return random accusation*****")
+					accusation['Room'] = room_copy[0]
+					accusation['Weapon'] = weapon_copy[0]
+					accusation['Suspect'] = suspect_copy[0]
+					return accusation
+
 			else:
 				print("****Attained a solution through direct information*****")
 				return accusation
