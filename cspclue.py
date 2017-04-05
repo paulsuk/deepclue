@@ -640,7 +640,7 @@ class Agent(metaclass=abc.ABCMeta):
 	'''
 	def __init__(self, name):
 		'''
-		init hand and shit
+		init hand
 		opponents
 
 		- DONE Initialize their own hand (given from game class)

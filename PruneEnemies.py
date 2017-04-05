@@ -16,12 +16,12 @@ class PruneEnemiesAgent(Agent):
 		# Initialize CSPs for other Agents
 		# Begin by initializing the opposing agent's possible cards (and removing my cards)
 		domain = WEAPONS + ROOMS + SUSPECTS
-		self.p1cards = [Card(typ = None, domain=domain)]*6
-		self.p2cards = [Card(typ = None, domain=domain)]*6
+		self.p2cards = [Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain)]
+		self.p3cards = [Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain)]
 
 		# Create the constraints for the player cards
-		self.p1constraint = Constraint(name = 'p1_constraint', scope = self.p1cards)
-		self.p2constraint = Constraint(name = 'p2_constraint', scope = self.p2cards)
+		self.p1constraint = Constraint(name = 'p1_constraint', scope = self.p2cards)
+		self.p2constraint = Constraint(name = 'p2_constraint', scope = self.p3cards)
 
 	def make_move(self):
 		'''
@@ -32,11 +32,10 @@ class PruneEnemiesAgent(Agent):
 
 		# INITIAL CHECK ROUTINES
 		if not self.pruned_hand_from_casefile:
-			print("****Gabe's Cards:****")
 			for my_card in self.hand.get_cards():
 				print(my_card.get_assigned_value())
 				# Prune values in my hand from enemies hands
-				for cards_list in [self.p1cards, self.p2cards]:
+				for cards_list in [self.p2cards, self.p3cards]:
 					for card in cards_list:
 						card.prune_value(my_card.get_assigned_value())
 
@@ -50,6 +49,12 @@ class PruneEnemiesAgent(Agent):
 
 			self.pruned_hand_from_casefile = True
 
+		room_copy = ROOMS
+		weapon_copy = WEAPONS
+		suspect_copy = SUSPECTS
+		np.random.shuffle(weapon_copy)
+		np.random.shuffle(room_copy)
+		np.random.shuffle(suspect_copy)
 
 		weapon_dom = self.caseFileWeapon.cur_domain()
 		room_dom = self.caseFileRoom.cur_domain()
@@ -67,9 +72,13 @@ class PruneEnemiesAgent(Agent):
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
 
+			if self.check_SAT():
+				return accusation
+			else:
+				print("Accusation does not meet the SAT constraint")
 			return accusation
 		else:
-			suggestion = Suggestion(self.name, self.firstOppName, weapon_dom[0], room_dom[0], suspect_dom[0])
+			suggestion = Suggestion(self.name, self.firstOppName, weapon_copy[0], room_copy[0], suspect_copy[0])
 			return suggestion
 
 	def respond_to_suggestion(self, suggestion):
@@ -102,13 +111,13 @@ class PruneEnemiesAgent(Agent):
 		# Prune suggested cards from suggester, assume player1 is suggester
 
 		if suggestion.suggester == self.firstOppName:
-			for card in self.p1cards:
+			for card in self.p2cards:
 				card.prune_value(suggestion.weapon)
 				card.prune_value(suggestion.room)
 				card.prune_value(suggestion.suspect)
 
 		elif suggestion.suggester == self.secondOppName:
-			for card in self.p2cards:
+			for card in self.p3cards:
 				card.prune_value(suggestion.weapon)
 				card.prune_value(suggestion.room)
 				card.prune_value(suggestion.suspect)
@@ -117,10 +126,11 @@ class PruneEnemiesAgent(Agent):
 		# Since all cards are pruned at once every time an information is received, only have to check one card
 
 		# If Know one enemy's cards for certain, prune the casefile.
-		for cards_list in [self.p1cards, self.p2cards]:
+		for cards_list in [self.p2cards, self.p3cards]:
 			if (cards_list[0].cur_domain_size() == 6):
-				#Get the domain of all cards (the same for all cards)
 				dom = cards_list[0].cur_domain()
+
+				#Get the domain of all cards (the same for all cards)
 				for value in dom:
 					if value in ROOMS:
 						self.caseFileRoom.prune_value(value)
@@ -167,11 +177,92 @@ class PruneEnemiesAgent(Agent):
 		# Initialize CSPs for other Agents
 		# Begin by initializing the opposing agent's possible cards (and removing my cards)
 		domain = WEAPONS + ROOMS + SUSPECTS
-		self.p1cards = [Card(typ = None, domain=domain)]*6
 		self.p2cards = [Card(typ = None, domain=domain)]*6
+		self.p3cards = [Card(typ = None, domain=domain)]*6
 
 		# Create the constraints for the player cards
-		self.p1constraint = Constraint(name = 'p1_constraint', scope = self.p1cards)
-		self.p2constraint = Constraint(name = 'p2_constraint', scope = self.p2cards)
+		self.p1constraint = Constraint(name = 'p1_constraint', scope = self.p2cards)
+		self.p2constraint = Constraint(name = 'p2_constraint', scope = self.p3cards)
 
 		return
+
+	def check_SAT(self):
+		''' Check the Satisfiability clause constraint '''
+
+		# First, populate the dictionary which will test the satisfiability clause
+		SAT_dict = {v:{"CF": False, "p1": False, "p2": False, "p3": False} for v in ROOMS+WEAPONS+SUSPECTS}
+		for card in self.hand.cards:
+			SAT_dict[card.get_assigned_value()]["p1"] = True
+		for card in [self.caseFileSuspect, self.caseFileWeapon, self.caseFileRoom]:
+			SAT_dict[card.get_assigned_value()]["CF"] = True
+		for value in self.p2cards[0].cur_domain():
+			SAT_dict[value]["p2"] = True
+		for value in self.p3cards[0].cur_domain():
+			SAT_dict[value]["p3"] = True
+
+		# Now, have to check that all statements satisfy the main clause that encompasses
+		# The rules of the game.
+
+		# We perform the AND operation using multiplication *. The OR operation is done using a +.
+		# We form a set of conjuctions and the final clause must be True
+		# for the accusation to hold
+
+		locations = ["CF", "p1", "p2", "p3"]
+		one_place = 1
+		only_one_place = 1
+		room_category = 1
+		weapon_category = 1
+		suspect_category = 1
+		for value in ROOMS+WEAPONS+SUSPECTS:
+
+			# 1. Each card in at least one place
+			one_place *= SAT_dict[value]["CF"] or SAT_dict[value]["p1"] or SAT_dict[value]["p2"] or SAT_dict[value]["p3"]
+
+			# 2. If a card is in one place, it cannot be in another place
+			for i in range(len(locations)):
+				only_one_place *= not SAT_dict[value][locations[i%4]] or not (SAT_dict[value][locations[(i+1)%4]] or SAT_dict[value][locations[(i+2)%4]] or SAT_dict[value][locations[(i+3)%4]])
+
+			# 3. There is at least one card in each category in the Case FIle
+			for i in range(len(locations)):
+				if value in ROOMS:
+					room_category +=  SAT_dict[value][locations[i]]
+				elif value in WEAPONS:
+					weapon_category +=  SAT_dict[value][locations[i]]
+				elif value in SUSPECTS:
+					suspect_category +=  SAT_dict[value][locations[i]]
+		one_in_each_category = room_category and weapon_category and suspect_category
+
+		# 4. No two cards in each category can both be in the case file
+		no_two_cards_in_cf = 1
+		room_len = len(ROOMS)
+		weapons_len = len(WEAPONS)
+		suspects_len = len(SUSPECTS)
+		for i in range(len(ROOMS)):
+			no_two_cards_in_cf *= not SAT_dict[ROOMS[i%room_len]]["CF"] or not \
+			(SAT_dict[ROOMS[(i+1)%room_len]]["CF"] \
+			or SAT_dict[ROOMS[(i+2)%room_len]]["CF"] \
+			or SAT_dict[ROOMS[(i+3)%room_len]]["CF"] \
+			or SAT_dict[ROOMS[(i+4)%room_len]]["CF"]\
+			 or SAT_dict[ROOMS[(i+5)%room_len]]["CF"] or \
+			 SAT_dict[ROOMS[(i+6)%room_len]]["CF"] or \
+			 SAT_dict[ROOMS[(i+7)%room_len]]["CF"] or \
+			 SAT_dict[ROOMS[(i+8)%room_len]]["CF"] )
+		for i in range(len(WEAPONS)):
+			no_two_cards_in_cf *= not SAT_dict[WEAPONS[i%room_len]]["CF"] or not \
+			(SAT_dict[WEAPONS[(i+1)%weapons_len]]["CF"] \
+			or SAT_dict[WEAPONS[(i+2)%weapons_len]]["CF"] \
+			or SAT_dict[WEAPONS[(i+3)%weapons_len]]["CF"] \
+			or SAT_dict[WEAPONS[(i+4)%weapons_len]]["CF"]\
+			 or SAT_dict[WEAPONS[(i+5)%weapons_len]]["CF"])
+		for i in range(len(SUSPECTS)):
+			no_two_cards_in_cf *= not SAT_dict[SUSPECTS[i%room_len]]["CF"] or not \
+			(SAT_dict[SUSPECTS[(i+1)%suspects_len]]["CF"] \
+			or SAT_dict[SUSPECTS[(i+2)%suspects_len]]["CF"] \
+			or SAT_dict[SUSPECTS[(i+3)%suspects_len]]["CF"] \
+			or SAT_dict[SUSPECTS[(i+4)%suspects_len]]["CF"]\
+			 or SAT_dict[SUSPECTS[(i+5)%suspects_len]]["CF"])
+
+		# Now, if the rules of the game are satisfied, this clause will
+		# be evaluated to True.
+
+		return one_place and only_one_place and one_in_each_category and no_two_cards_in_cf

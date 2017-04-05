@@ -242,14 +242,14 @@ if __name__ == '__main__':
 	game = Game()
 
 	p1 = SimpleRandom('paul')
-	p2 = CSPAgent('grace')
+	p2 = PruneEnemiesAgent('grace')
 	p3 = PruneEnemiesAgent('gabe')
 	game.init_players(p1, p2, p3)
 
 	name, i = game.play_game()
 	print("{} won after {} turns".format(name, i))
 
-	game.reset()
-
-	name, i = game.play_game()
-	print("{} won after {} turns".format(name, i))
+	# game.reset()
+	#
+	# name, i = game.play_game()
+	# print("{} won after {} turns".format(name, i))
