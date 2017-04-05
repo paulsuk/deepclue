@@ -4,9 +4,9 @@ import time
 import functools
 import matplotlib.pyplot as plt
 import numpy as np
-from PruneEnemies import *
 from SimpleRandom import *
 from CSPAgent import *
+from SATAgent import *
 from ProbAgent import *
 import pdb
 
@@ -157,16 +157,11 @@ class Game(object):
 		turn_num = 0
 
 		while not finished:
-<<<<<<< HEAD
-			#print("in the while not finished")
-			#print(isNotEliminated)
-=======
 			if turn_num > 200:
 				if verbose:
 					print("TOOK WAY TOO LONG HOMIE")
 				return None, turn_num
 
->>>>>>> bd93eb123b65478de8251e684bbaad8170267755
 			if not any(isNotEliminated):
 				# noone can make a move
 				if verbose:
@@ -300,6 +295,10 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 	players = (p1.name, p2.name, p3.name)
 	order = ('first', 'second', 'last')
 	x_pos = np.arange(len(players))
+	for name in turns:
+		if not turns[name]:
+			turns[name] = [0]
+
 	avg_turns = [np.mean(turns[name]) for name in players]
 	win_totals = [wins[name] for name in players]
 
@@ -326,7 +325,7 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 
 if __name__ == '__main__':
 	p1 = SimpleRandom('Simple1')
-	p2 = SimpleRandom('Simple2')
-	p3 = SimpleRandom('Simple3')
+	p2 = SATAgent('SAT')
+	p3 = SimpleRandom('Simple2')
 
-	compare(p1, p2, p3, "simple_randoms", n=1, verbose=True)
+	compare(p1, p2, p3, "simple_randoms", n=10000, verbose=False)
