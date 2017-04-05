@@ -109,7 +109,9 @@ class GameTreeProbAgent(Agent):
 		#	print("OP2: CARD: {} PROBABILITY: {}".format(key, value))
 
 		print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
-	
+		print("CF {} : W{}: R:{} S:{}".format(self.firstOppName, self.first_caseFileWeapon.cur_domain(), self.first_caseFileRoom.cur_domain(), self.first_caseFileSuspect.cur_domain()))
+		print("CF {} : W{}: R:{} S:{}".format(self.secondOppName, self.second_caseFileWeapon.cur_domain(), self.second_caseFileRoom.cur_domain(), self.second_caseFileSuspect.cur_domain()))
+
 		prob = self._find_probability()
 
 		print("CUR DOM PROBABILITY {}: {}".format(self.firstOppName, self.first_total_cur_dom))
@@ -137,7 +139,7 @@ class GameTreeProbAgent(Agent):
 			return accusation
 		
 		#Make accusation if others are close - at least one section figured out
-		'''if (self.first_total_cur_dom < 9 or self.second_total_cur_dom < 9):
+			'''if (self.first_total_cur_dom < 9 or self.second_total_cur_dom < 9):
 			small_room = self._smaller_dom(room_dom, ROOMS)
 			small_weapon = self._smaller_dom(weapon_dom, WEAPONS)
 			small_suspect = self._smaller_dom(suspect_dom, SUSPECTS)
@@ -245,6 +247,7 @@ class GameTreeProbAgent(Agent):
 			if answer != None:
 				print('Reduce {} cur domain'.format(self.firstOppName))
 				self._update_cur_dom(self.firstOppName)
+				self._prune_opp_case(self.firstOppName, answer)
 			return answer
 		else:
 			p = [None]*3
@@ -256,6 +259,7 @@ class GameTreeProbAgent(Agent):
 			if answer != None:
 				print('Reduce {} cur domain'.format(self.secondOppName))
 				self._update_cur_dom(self.secondOppName)
+				self._prune_opp_case(self.secondOppName, answer)
 			return answer
 
 
@@ -479,10 +483,25 @@ class GameTreeProbAgent(Agent):
 					else:
 						continue
 	
-	def _prune_opp_case(self):
+	def _prune_opp_case(self, name, card):
 		'''
 		Prune cards that agent has shown opponents from opponents caseFile
 		'''
+		if name == self.firstOppName:
+			if card.typ == 'Weapon' and self.first_caseFileWeapon.in_cur_domain(card.assignedValue):
+				self.first_caseFileWeapon.prune_value(card.assignedValue)
+			elif card.typ == 'Room' and self.first_caseFileRoom.in_cur_domain(card.assignedValue):
+				self.first_caseFileRoom.prune_value(card.assignedValue)
+			elif card.typ == 'Suspect' and self.first_caseFileSuspect.in_cur_domain(card.assignedValue):
+				self.first_caseFileSuspect.prune_value(card.assignedValue)
+		if name == self.secondOppName:
+			if card.typ == 'Weapon' and self.second_caseFileWeapon.in_cur_domain(card.assignedValue):
+				self.second_caseFileWeapon.prune_value(card.assignedValue)
+			elif card.typ == 'Room' and self.second_caseFileRoom.in_cur_domain(card.assignedValue):
+				self.second_caseFileRoom.prune_value(card.assignedValue)
+			elif card.typ == 'Suspect' and self.second_caseFileSuspect.in_cur_domain(card.assignedValue):
+				self.second_caseFileSuspect.prune_value(card.assignedValue)
+
 
 	def _update_cur_dom(self, name):
 		if name == self.firstOppName:
