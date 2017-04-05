@@ -115,6 +115,14 @@ class Game(object):
 
 		TODO: check if agents are all classes/subclasses of Agent
 		'''
+		if not isinstance(agent1, Agent) or not isinstance(agent2, Agent) or 
+			not isinstance(agent3, Agent()):
+			raise TypeError("All Agents must be subclasses of Agent!")
+
+		if agent1.name == agent2.name or agent2.name == agent3.name or 
+			agent1.name == agent3.name:
+			raise ImplementationError("Agents must have different names!")
+
 		hand1, hand2, hand3 = self._distribute_cards()
 		agent1.give_hand(hand1)
 		agent2.give_hand(hand2)
@@ -312,7 +320,7 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 	plt.figure()
 	plt.bar(x_pos, player_turn_wins, align="center")
 	plt.xticks(x_pos, order)
-	plt.ylabel("Turns")
+	plt.ylabel("Wins")
 	plt.title("Guessing Order Wins out of {} games".format(n))
 	plt.savefig(testname + "_order.png")
 
