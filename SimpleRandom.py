@@ -26,7 +26,7 @@ class SimpleRandom(Agent):
 			self.caseFileSuspect.assign(suspect_value)
 
 			accusation = {}
-			accusation['Room'] = self.caseFileRoom
+			accusation['Room'] = Card(typ="Room", name='Hall')
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
 			return accusation
