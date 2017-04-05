@@ -2,6 +2,7 @@ from cspclue import *
 import abc
 import time
 import functools
+import matplotlib.pyplot as plt
 import numpy as np
 from SimpleRandom import *
 from CSPAgent import *
@@ -109,12 +110,20 @@ class Game(object):
 
 		return hand1, hand2, hand3
 
-	def init_players(self, agent1, agent2, agent3):
+	def init_players(self, agent1, agent2, agent3, verbose=False):
 		'''
 		Adds 3 agents, initializes them and gives them cards
 
 		TODO: check if agents are all classes/subclasses of Agent
 		'''
+		if not isinstance(agent1, Agent) or not isinstance(agent2, Agent) or 
+			not isinstance(agent3, Agent()):
+			raise TypeError("All Agents must be subclasses of Agent!")
+
+		if agent1.name == agent2.name or agent2.name == agent3.name or 
+			agent1.name == agent3.name:
+			raise ImplementationError("Agents must have different names!")
+
 		hand1, hand2, hand3 = self._distribute_cards()
 		agent1.give_hand(hand1)
 		agent2.give_hand(hand2)
@@ -126,20 +135,22 @@ class Game(object):
 		player_order_dict = {}
 		for i in range(len(self.agents)):
 			player_order_dict[i] = self.agents[i].name
-			print("player {}'s cards: {}".format(i, self.agents[i].hand.get_cards()))
+			if verbose:
+				print("player {}'s cards: {}".format(i, self.agents[i].hand.get_cards()))
 
 		for agent in self.agents:
 			agent.init_player_orders(player_order_dict)
 
-	def play_game(self):
+	def play_game(self, verbose=False):
 		'''
 		- keeping track of who's turn is it
 		- is game still going/did someone win?
 		- tell next player it's their turn
 		- returns the player who won's name, and the number of turns it took
 		'''
-		print("Game Starting!")
-		print("Case file cards: {}".format(self.case_file_cards()))
+		if verbose:
+			print("Game Starting!")
+			print("Case file cards: {}".format(self.case_file_cards()))
 
 		isNotEliminated = [True]*len(self.agents)
 		finished = False
@@ -147,9 +158,15 @@ class Game(object):
 		turn_num = 0
 
 		while not finished:
+			if turn_num > 200:
+				if verbose:
+					print("TOOK WAY TOO LONG HOMIE")
+				return None, turn_num
+
 			if not any(isNotEliminated):
 				# noone can make a move
-				print("All Players Eliminated!")
+				if verbose:
+					print("All Players Eliminated!")
 				return None, turn_num
 
 			elif isNotEliminated[i]:
@@ -157,24 +174,28 @@ class Game(object):
 				suggester = self.agents[i]
 				responder = self.agents[(i + 1) % 3]
 				observer = self.agents[(i + 2) % 3]
-				print("ROUND {}: {}'s TURN TO MOVE".format(turn_num, suggester.name))
+				if verbose:
+					print("ROUND {}: {}'s TURN TO MOVE".format(turn_num, suggester.name))
 
 				move = suggester.make_move()
 
 				if isinstance(move, Suggestion):
 					# suggester made a suggestion
 
-					self._print_suggestion(suggester.name, move)
+					if verbose:
+						self._print_suggestion(suggester.name, move)
 
-					card_exchanged = self._made_suggestion(move, suggester, responder, observer)
+					card_exchanged = self._made_suggestion(move, suggester, responder, observer, verbose)
 
 					if not card_exchanged:
 						# ask the next player
 						move.responder = observer.name
-						card_exchanged = self._made_suggestion(move, suggester, observer, responder)
+						card_exchanged = self._made_suggestion(move, suggester, observer, responder, verbose)
 
 				else:
 					# suggester made an accusation
+					if verbose:
+						print("Accusation made: {}".format(move))
 					was_correct = self._check_accusation(move)
 					accuser_name = suggester.name
 					suggester.observe_accusation(accuser_name, was_correct)
@@ -184,12 +205,14 @@ class Game(object):
 					if was_correct:
 						finished = True
 					else:
+						if verbose:
+							print("Player {} Eliminated".format(accuser_name))
 						isNotEliminated[i] = False
 
-				i = (i + 1) % 3
 				turn_num += 1
+			i = (i + 1) % 3
 
-		return suggester.name, turn_num
+		return suggester.name, (turn_num - 1)
 
 	def reset(self):
 		self._init_cards()
@@ -216,17 +239,18 @@ class Game(object):
 			return False
 		return True
 
-	def _made_suggestion(self, move, suggester, responder, observer):
+	def _made_suggestion(self, move, suggester, responder, observer, verbose=False):
 		response = responder.respond_to_suggestion(move)
 		suggester.update_from_response(move, response)
 
 		card_exchanged = response is not None
 		observer.observe_suggestion(move, card_exchanged)
 
-		if card_exchanged:
-			print("{} showed {} to {}".format(responder.name, response.get_assigned_value(), suggester.name))
-		else:
-			print("{} didn't have any of those cards".format(responder.name))
+		if verbose:
+			if card_exchanged:
+				print("{} showed {} to {}".format(responder.name, response.get_assigned_value(), suggester.name))
+			else:
+				print("{} didn't have any of those cards".format(responder.name))
 
 		return card_exchanged
 
@@ -237,19 +261,68 @@ class Game(object):
 		cards = suggestion.get_cards()
 		print("suggester suggests: {}".format(cards))
 
-if __name__ == '__main__':
+
+def compare(p1, p2, p3, testname, n=100, verbose=False):
 	game = Game()
-	p1 = CSPAgent('paul')
-	p2 = AlphaBetaAgent('grace')
-	p3 = SimpleRandom('gabe')
-	game.init_players(p1, p2, p3)
+	game.init_players(p1, p2, p3, verbose)
 
-	name, i = game.play_game()
-	print("{} won after {} turns".format(name, i))
+	wins = {}
+	wins[p1.name] = 0
+	wins[p2.name] = 0
+	wins[p3.name] = 0
 
-#	game.reset()
+	turns = {}
+	turns[p1.name] = []
+	turns[p2.name] = []
+	turns[p3.name] = []
 
-#	name, i = game.play_game()
-#	print("{} won after {} turns".format(name, i))
+	player_turn_wins = [0, 0, 0]
+	non_wins = 0
 
+	for i in range(n):
+		game.reset()
 
+		winner, num_turns = game.play_game(verbose)
+		if verbose:
+			print("{} won after {} turns".format(winner, num_turns))
+		if winner:
+			turns[winner].append(num_turns)
+			wins[winner] += 1
+			player_turn_wins[(num_turns) % 3] += 1
+
+		else:
+			non_wins += 1
+
+	players = (p1.name, p2.name, p3.name)
+	order = ('first', 'second', 'last')
+	x_pos = np.arange(len(players))
+	avg_turns = [np.mean(turns[name]) for name in players]
+	win_totals = [wins[name] for name in players]
+	
+	plt.figure()
+	plt.bar(x_pos, avg_turns, align="center")
+	plt.xticks(x_pos, players)
+	plt.ylabel("Turns")
+	plt.title("Average Number of Turns over {} games".format(n))
+	plt.savefig(testname + "_avg_turns.png")
+
+	plt.figure()
+	plt.bar(x_pos, win_totals, align="center")
+	plt.xticks(x_pos, players)
+	plt.ylabel("Wins")
+	plt.title("Wins per player out of {} games".format(n))
+	plt.savefig(testname + "_wins.png")
+
+	plt.figure()
+	plt.bar(x_pos, player_turn_wins, align="center")
+	plt.xticks(x_pos, order)
+	plt.ylabel("Wins")
+	plt.title("Guessing Order Wins out of {} games".format(n))
+	plt.savefig(testname + "_order.png")		
+
+if __name__ == '__main__':
+	p1 = GameTreeProbAgent('Simple1')
+	p2 = SimpleRandom('Simple2')
+	p3 = SimpleRandom('Simple3')
+
+	compare(p1, p2, p3, "simple_randoms", n=10000, verbose=False)
