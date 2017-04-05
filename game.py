@@ -114,12 +114,12 @@ class Game(object):
 
 		TODO: check if agents are all classes/subclasses of Agent
 		'''
-		if not isinstance(agent1, Agent) or not isinstance(agent2, Agent) or 
-			not isinstance(agent3, Agent()):
+		if (not isinstance(agent1, Agent) or not isinstance(agent2, Agent) or 
+			not isinstance(agent3, Agent)):
 			raise TypeError("All Agents must be subclasses of Agent!")
 
-		if agent1.name == agent2.name or agent2.name == agent3.name or 
-			agent1.name == agent3.name:
+		if (agent1.name == agent2.name or agent2.name == agent3.name or 
+			agent1.name == agent3.name):
 			raise ImplementationError("Agents must have different names!")
 
 		hand1, hand2, hand3 = self._distribute_cards()
