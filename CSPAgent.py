@@ -228,6 +228,10 @@ class CSPAgent(Agent):
 		to reset for a new game!
 		'''
 		super().reset()
+<<<<<<< HEAD
+
+=======
+>>>>>>> b6a3312f4ab3fbd893afef2ba05d054695a8d11f
 		self.first_opponent_hand = Hand()
 		self.second_opponent_hand = Hand()
 
