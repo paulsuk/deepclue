@@ -322,4 +322,4 @@ if __name__ == '__main__':
 	p2 = SimpleRandom('Simple2')
 	p3 = SimpleRandom('Simple3')
 
-	compare(p1, p2, p3, "simple_randoms", n=10000, verbose=False)
+	compare(p1, p2, p3, "simple_randoms", n=1, verbose=True)
