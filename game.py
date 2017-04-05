@@ -4,6 +4,7 @@ import time
 import functools
 import matplotlib.pyplot as plt
 import numpy as np
+from PruneEnemies import *
 from SimpleRandom import *
 from CSPAgent import *
 from ProbAgent import *
@@ -156,11 +157,16 @@ class Game(object):
 		turn_num = 0
 
 		while not finished:
+<<<<<<< HEAD
+			#print("in the while not finished")
+			#print(isNotEliminated)
+=======
 			if turn_num > 200:
 				if verbose:
 					print("TOOK WAY TOO LONG HOMIE")
 				return None, turn_num
 
+>>>>>>> bd93eb123b65478de8251e684bbaad8170267755
 			if not any(isNotEliminated):
 				# noone can make a move
 				if verbose:
@@ -259,6 +265,7 @@ class Game(object):
 		cards = suggestion.get_cards()
 		print("suggester suggests: {}".format(cards))
 
+
 def compare(p1, p2, p3, testname, n=100, verbose=False):
 	game = Game()
 	game.init_players(p1, p2, p3, verbose)
@@ -295,7 +302,7 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 	x_pos = np.arange(len(players))
 	avg_turns = [np.mean(turns[name]) for name in players]
 	win_totals = [wins[name] for name in players]
-	
+
 	plt.figure()
 	plt.bar(x_pos, avg_turns, align="center")
 	plt.xticks(x_pos, players)
@@ -315,7 +322,7 @@ def compare(p1, p2, p3, testname, n=100, verbose=False):
 	plt.xticks(x_pos, order)
 	plt.ylabel("Wins")
 	plt.title("Guessing Order Wins out of {} games".format(n))
-	plt.savefig(testname + "_order.png")		
+	plt.savefig(testname + "_order.png")
 
 if __name__ == '__main__':
 	p1 = SimpleRandom('Simple1')

@@ -600,11 +600,11 @@ class Hand(object):
 
 	def pruneHand(self, know_hand):
 		'''
-		Prunes opponent_hand of card values in self.hand 
+		Prunes opponent_hand of card values in self.hand
 		'''
 		for op_card in self.cards:
 		  for card in know_hand.get_cards():
-		    op_card.prune_value(card.assignedValue)
+		   op_card.prune_value(card.assignedValue)
 
 	def get_assigned_card_values(self):
 		'''
@@ -640,7 +640,7 @@ class Agent(metaclass=abc.ABCMeta):
 	'''
 	def __init__(self, name):
 		'''
-		init hand and shit
+		init hand
 		opponents
 
 		- DONE Initialize their own hand (given from game class)
@@ -671,7 +671,7 @@ class Agent(metaclass=abc.ABCMeta):
 		self.CSP.add_constraint(roomConstraint)
 		self.CSP.add_constraint(suspectConstraint)
 		self.CSP.add_constraint(weaponConstraint)
-		
+
 	def init_player_orders(self, order_dict):
 		'''
 		order_dict is a dictionary that maps player numbers to their names
@@ -699,6 +699,7 @@ class Agent(metaclass=abc.ABCMeta):
 			else:
 				self.caseFileSuspect.prune_value(card.assignedValue)
 
+	@abc.abstractmethod
 	def reset(self):
 		self._init_csp()
 
