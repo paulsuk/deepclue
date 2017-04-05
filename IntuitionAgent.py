@@ -1,10 +1,10 @@
 from game import *
 
-	#CSPAgent focuses on 'observe_suggestion()' function.
+	#IntuitionAgent focuses on 'observe_suggestion()' function.
 	#- It observes the exchange as first opponent is the suggester
 
 
-class CSPAgent(Agent):
+class IntuitionAgent(Agent):
 	def __init__(self, name):
 		super().__init__(name)
 

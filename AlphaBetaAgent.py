@@ -1,10 +1,11 @@
 from game import *
+import itertools	
 
 	#CSPAgent focuses on 'observe_suggestion()' function.
 	#- It observes the exchange as first opponent is the suggester
+	
 
-
-class CSPAgent(Agent):
+class AlphaBetaAgent(Agent):
 	def __init__(self, name):
 		super().__init__(name)
 
@@ -12,9 +13,9 @@ class CSPAgent(Agent):
 		self.first_opponent_hand = Hand()
 		self.second_opponent_hand = Hand()
 
-		print("START")
-		print("cards: {}".format(self.first_opponent_hand.get_cards()))
-		print("cards: {}".format(self.second_opponent_hand.get_cards()))
+		#print("START")
+		#print("cards: {}".format(self.first_opponent_hand.get_cards()))
+		#print("cards: {}".format(self.second_opponent_hand.get_cards()))
 
 		#Sets to keep track of potential domains for each hand
 		self.first_opponent_sets = []
@@ -22,6 +23,8 @@ class CSPAgent(Agent):
 
 		#Keep track of prev suggestion
 		self.past_suggestion = [None]*3
+
+		self.combinations = []
 
 	def make_move(self):
 		'''
@@ -37,33 +40,29 @@ class CSPAgent(Agent):
 		room_dom = self.caseFileRoom.cur_domain()
 		suspect_dom = self.caseFileSuspect.cur_domain()
 
+		self.first_opponent_sets = [x for x in self.first_opponent_sets if x]
+		self.second_opponent_sets = [x for x in self.second_opponent_sets if x]
+
 		#For the first tern - randomly make a suggestion
 		if None in self.past_suggestion:
 			#Prune agents cards from opponents' hands
 			self.first_opponent_hand.pruneHand(self.hand)
 			self.second_opponent_hand.pruneHand(self.hand)
-
-			np.random.shuffle(weapon_dom)
-			np.random.shuffle(room_dom)
-			np.random.shuffle(suspect_dom)
-
-			self.past_suggestion[0] = weapon_dom[0]
-			self.past_suggestion[1] = room_dom[0]
-			self.past_suggestion[2] = suspect_dom[0]
-
-			suggestion = Suggestion(self.name, self.firstOppName, weapon_dom[0], room_dom[0], suspect_dom[0])
-			return suggestion
+			self._init_combinations()
 
 		#Update the player's hands and sets
 		self._update_player(self.first_opponent_hand, self.first_opponent_sets)
 		self._update_player(self.second_opponent_hand, self.second_opponent_sets)
-
+		
 		#Prune assigned values in one hand from the other
 		self._update_each_other()
 
 		#Prune assigned values from the hands from the cur dom of the casefile
 		self._update_case(self.first_opponent_hand)
 		self._update_case(self.second_opponent_hand)
+
+		#Update level of tree
+		self._update_tree()
 
 		#print("Player {}'s cards: {}".format(self.firstOppName, self.first_opponent_hand.get_cards()))
 		#print("Player {}'s cards: {}".format(self.secondOppName, self.second_opponent_hand.get_cards()))
@@ -72,6 +71,7 @@ class CSPAgent(Agent):
 		#print("Player {}'s set: {}".format(self.secondOppName, self.second_opponent_sets))
 
 		#print("CF: W{}: R:{} S:{}".format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
+		#print(self.combinations)
 
 		#Make accusation
 		if (self.caseFileWeapon.cur_domain_size() == 1 and self.caseFileRoom.cur_domain_size() == 1 and self.caseFileSuspect.cur_domain_size() == 1):
@@ -88,19 +88,16 @@ class CSPAgent(Agent):
 			accusation['Weapon'] = self.caseFileWeapon
 			accusation['Suspect'] = self.caseFileSuspect
 			return accusation
-
-		#Make suggestion - keep as close to prev suggestion as possible
+		
+		#Make suggestion - from positive terms in game tree
 		else:
-			if self.past_suggestion[0] not in weapon_dom:
-				np.random.shuffle(weapon_dom)
-				self.past_suggestion[0] = weapon_dom[0]
-			if self.past_suggestion[1] not in room_dom:
-				np.random.shuffle(room_dom)
-				self.past_suggestion[1] = room_dom[0]
-			if self.past_suggestion[2] not in suspect_dom:
-				np.random.shuffle(suspect_dom)
-				self.past_suggestion[2] = suspect_dom[0]
-			suggestion = Suggestion(self.name, self.firstOppName, self.past_suggestion[0], self.past_suggestion[1], self.past_suggestion[2])
+			np.random.shuffle(self.combinations)
+			guess = self.combinations[0]
+			print(guess)
+			self.past_suggestion[0] = guess[0]
+			self.past_suggestion[1] = guess[1]
+			self.past_suggestion[2] = guess[2]
+			suggestion = Suggestion(self.name, self.firstOppName, guess[0], guess[1], guess[2])
 			return suggestion
 
 
@@ -139,7 +136,7 @@ class CSPAgent(Agent):
 				self._add_domain(suggestion, self.first_opponent_hand, self.first_opponent_sets)
 			elif suggestion.responder == self.secondOppName:
 				self._add_domain(suggestion, self.second_opponent_hand, self.second_opponent_sets)
-
+			
 		#If opponent did not respond, they do not have the suggested
 		#Weapon, room or suspect. Prune these from their cards.
 		#Also, prune values from domains in sets
@@ -152,10 +149,10 @@ class CSPAgent(Agent):
 		'''
 		after making a suggestion, this method will be called to respond to a response
 
-		- Doesnt have
+		- Doesnt have 
 			- prune from domain of sets
 			- prune from paul's hand
-		- Does have
+		- Does have 
 			- prune domain from sets
 			- prune from casefile
 			- add response to non assigned value
@@ -202,18 +199,18 @@ class CSPAgent(Agent):
 			if suggestion.responder == self.secondOppName:
 				if self.caseFileWeapon.cur_domain_size() != 1:
 					if self.caseFileWeapon.in_cur_domain(suggestion.weapon):
-						print('**************FOUND WEAPON BC LUCKY GUESS****************')
+						#print('**************FOUND WEAPON BC LUCKY GUESS****************')
 						self._prune_all(self.caseFileWeapon, suggestion.weapon)
 				if self.caseFileSuspect.cur_domain_size() != 1:
 					if self.caseFileSuspect.in_cur_domain(suggestion.suspect):
 						self._prune_all(self.caseFileSuspect, suggestion.suspect)
-						print('*************FOUND SUSPECT BC LUCKY GUESS****************')
+						#print('*************FOUND SUSPECT BC LUCKY GUESS****************')
 				if self.caseFileRoom.cur_domain_size() != 1:
 					if self.caseFileRoom.in_cur_domain(suggestion.room):
 						self._prune_all(self.caseFileRoom, suggestion.room)
-						print('*************FOUND ROOM BC LUCKY GUESS*******************')
+						#print('*************FOUND ROOM BC LUCKY GUESS*******************')
 
-				print('Case file W:{} R:{} S:{}'.format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
+				#print('Case file W:{} R:{} S:{}'.format(self.caseFileWeapon.cur_domain(), self.caseFileRoom.cur_domain(), self.caseFileSuspect.cur_domain()))
 
 	def observe_accusation(self, was_accuser, was_correct):
 		'''
@@ -222,7 +219,7 @@ class CSPAgent(Agent):
 		was_correct is true if the accusation was correct (and the game ends)
 		'''
 		return
-
+	
 	def reset(self):
 		'''
 		to reset for a new game!
@@ -231,11 +228,41 @@ class CSPAgent(Agent):
 
 		self.first_opponent_hand = Hand()
 		self.second_opponent_hand = Hand()
-
+		
 		self.first_opponent_sets = []
 		self.second_opponent_sets = []
 
 		self.past_suggestion = [None]*3
+
+		self.combinations = []
+
+	def _init_combinations(self):
+		#Make all combinations
+		ALL = []
+		ALL.append(WEAPONS)
+		ALL.append(ROOMS)
+		ALL.append(SUSPECTS)
+		self.combinations = list(itertools.product(*ALL))
+
+	def _update_tree(self):
+		'''
+		Use casefiles to remove combinations that
+		were eliminated by pruning.
+		'''
+		#Remove all values not in the current domain
+		prune = []
+		for weapon in WEAPONS:
+			if not self.caseFileWeapon.in_cur_domain(weapon):
+				prune.append(weapon)
+		for suspect in SUSPECTS:
+			if not self.caseFileSuspect.in_cur_domain(suspect):
+				prune.append(suspect)
+		for room in ROOMS:
+			if not self.caseFileRoom.in_cur_domain(room):
+				prune.append(room)
+
+		copy = self.combinations
+		self.combinations = [x for x in copy if set(x).isdisjoint(prune)]
 
 	def _update_case(self, hand):
 		'''
@@ -261,11 +288,10 @@ class CSPAgent(Agent):
 		'''
 		assigned = set(hand.get_assigned_card_values())
 		#print("Assigned: {}".format(hand.get_assigned_card_values()))
-		copy = sets
 		for i, domain in enumerate(sets):
 			#Remove domains of size 1
 			if len(domain) == 1 and domain[0] not in hand.get_assigned_card_values() and None in hand.get_assigned_card_values():
-				print('********************** ASSIGNED BECAUSE SIZE 1: UPDATE PLAYERS {} *************************'.format(domain[0]))
+				#print('********************** ASSIGNED BECAUSE SIZE 1: UPDATE PLAYERS {} *************************'.format(domain[0]))
 				card = Card(typ=None, name=domain[0], domain=domain)
 				card.update_type()
 				hand.add_card(card)
@@ -274,18 +300,19 @@ class CSPAgent(Agent):
 				if self.caseFileWeapon.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileWeapon.cur_domain()[0])]
 					sets[i] = new_dom
-					print('********************** CHANGED BC CF WEAPON KNOWN *************************')
+					#print('********************** CHANGED BC CF WEAPON KNOWN *************************')
 			if self.caseFileSuspect.cur_domain_size() == 1:
 				if self.caseFileSuspect.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileSuspect.cur_domain()[0])]
 					sets[i] = new_dom
-					print('********************** CHANGED BC CF SUSPECT KNOWN *************************')
+					#print('********************** CHANGED BC CF SUSPECT KNOWN *************************')
 			if self.caseFileRoom.cur_domain_size() == 1:
 				if self.caseFileRoom.cur_domain()[0] in domain:
 					new_dom = [x for x in domain if (x != self.caseFileRoom.cur_domain()[0])]
 					sets[i] = new_dom
-					print('********************** CHANGED BC CF ROOM KNOWN *************************')
-
+					#print('********************** CHANGED BC CF ROOM KNOWN *************************')
+		
+		copy = sets
 		for domain in copy:
 			#Prune if already assigned
 			overlap = assigned.intersection(domain)
@@ -302,7 +329,7 @@ class CSPAgent(Agent):
 		'''
 		assigned_1 = set(self.first_opponent_hand.get_assigned_card_values())
 		assigned_2 = set(self.second_opponent_hand.get_assigned_card_values())
-
+			
 		for value in assigned_1:
 			if value != None:
 				for card in self.second_opponent_hand.get_cards():
@@ -338,8 +365,8 @@ class CSPAgent(Agent):
 		if len(sets) != 0:
 			for i, domain in enumerate(sets):
 				new_dom = [x for x in domain if (x != suggestion.suspect or x!= suggestion.room or x!=suggestion.weapon)]
-				if new_dom != domain:
-					print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX CHANGE MADE TO SETS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+				#if new_dom != domain:
+				#print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX CHANGE MADE TO SETS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 				sets[i] = new_dom
 
 
@@ -353,7 +380,7 @@ class CSPAgent(Agent):
 		#Populate domain
 		for card in hand.get_cards():
 			#Do not add constraint if already know what card (or a card that) was shown
-			if (card.get_assigned_value() == suggestion.weapon or card.get_assigned_value() == suggestion.room
+			if (card.get_assigned_value() == suggestion.weapon or card.get_assigned_value() == suggestion.room 
 				or card.get_assigned_value() == suggestion.suspect):
 				return
 
@@ -363,11 +390,11 @@ class CSPAgent(Agent):
 				domain.append(suggestion.room)
 			if card.in_cur_domain(suggestion.suspect) and suggestion.suspect not in domain and suggestion.weapon not in my_cards:
 				domain.append(suggestion.suspect)
-
-		#If only one value - assign value to an unassigned card
+			
+		#If only one value - assign value to an unassigned card 
 		if len(domain) == 1 and domain[0] not in hand.get_assigned_card_values() and None in hand.get_assigned_card_values():
 			#print("Domain: {}".format(domain))
-			print("************************ ASSIGNED BC SIZE 1: ADD DOMAIN {} **************************".format(domain[0]))
+			#print("************************ ASSIGNED BC SIZE 1: ADD DOMAIN {} **************************".format(domain[0]))
 			card = Card(typ=None, name=domain[0], domain=domain)
 			card.update_type()
 			hand.add_card(card)
@@ -375,3 +402,6 @@ class CSPAgent(Agent):
 
 		else:
 			sets.append(domain)
+
+
+	
