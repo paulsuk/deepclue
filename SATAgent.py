@@ -19,10 +19,6 @@ class SATAgent(Agent):
 		self.p2cards = [Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain)]
 		self.p3cards = [Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain), Card(typ = None, domain=domain)]
 
-		# Create the constraints for the player cards
-		self.p1constraint = Constraint(name = 'p1_constraint', scope = self.p2cards)
-		self.p2constraint = Constraint(name = 'p2_constraint', scope = self.p3cards)
-
 	def make_move(self):
 		'''
 		decide when to make a suggestion or accusation
@@ -192,10 +188,6 @@ class SATAgent(Agent):
 		domain = WEAPONS + ROOMS + SUSPECTS
 		self.p2cards = [Card(typ = None, domain=domain)]*6
 		self.p3cards = [Card(typ = None, domain=domain)]*6
-
-		# Create the constraints for the player cards
-		self.p1constraint = Constraint(name = 'p1_constraint', scope = self.p2cards)
-		self.p2constraint = Constraint(name = 'p2_constraint', scope = self.p3cards)
 
 		return
 
